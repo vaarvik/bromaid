@@ -1,0 +1,41 @@
+{
+  "name": "bromaid-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Diagrams-as-code, the way mermaid should have been: pure-string SVG output, RSC-ready, fully typed.",
+  "author": "Johann Vårvik (https://johann.no)",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter='./packages/*' --workspace-concurrency=1 run build",
+    "test": "pnpm build && pnpm -r --filter='./packages/*' run test",
+    "test:watch": "pnpm -r --filter='./packages/*' run test:watch",
+    "typecheck": "pnpm -r --filter='./packages/*' run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "smoke": "node --experimental-strip-types scripts/smoke.ts",
+    "smoke:next": "pnpm --filter @bromaid-examples/next-app-smoke build",
+    "clean": "pnpm -r exec rm -rf dist .turbo node_modules/.cache",
+    "changeset": "changeset",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@bromaid/core": "workspace:*",
+    "@bromaid/layout": "workspace:*",
+    "@bromaid/renderer": "workspace:*",
+    "@bromaid/theme": "workspace:*",
+    "@changesets/cli": "^2.27.10",
+    "@types/node": "^22.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "elkjs": "^0.9.3",
+    "eslint": "^9.15.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
