@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Theme registry for @bromaid: slug colors, type accents, light/dark palettes.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vaarvik/bromaid.git",
+    "directory": "packages/theme"
+  },
+  "homepage": "https://github.com/vaarvik/bromaid#readme",
+  "bugs": {
+    "url": "https://github.com/vaarvik/bromaid/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",

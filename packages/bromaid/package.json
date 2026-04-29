@@ -1,12 +1,12 @@
 {
-  "name": "@bromaid/core",
+  "name": "bromaid",
   "version": "0.1.0",
-  "description": "Tokenizer, parser, and AST for the bromaid diagrams-as-code DSL.",
+  "description": "Batteries-included bromaid umbrella package: parse → layout → renderSVG (SVG string).",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vaarvik/bromaid.git",
-    "directory": "packages/core"
+    "directory": "packages/bromaid"
   },
   "homepage": "https://github.com/vaarvik/bromaid#readme",
   "bugs": {
@@ -26,6 +26,7 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
+    "access": "public",
     "types": "./dist/index.d.ts",
     "exports": {
       ".": {
@@ -47,9 +48,17 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@bromaid/core": "workspace:*",
+    "@bromaid/layout": "workspace:*",
+    "@bromaid/renderer": "workspace:*",
+    "@bromaid/theme": "workspace:*",
+    "elkjs": "^0.9.3"
+  },
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
   }
 }
+

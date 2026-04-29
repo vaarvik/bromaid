@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@bromaid-examples/next-app-smoke"]
+  "ignore": ["@bromaid-examples/next-app-smoke", "@bromaid-apps/bromaid-com"]
 }

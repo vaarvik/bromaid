@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "ELK-based layout for @bromaid. Server- and edge-runtime safe (no worker).",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vaarvik/bromaid.git",
+    "directory": "packages/layout"
+  },
+  "homepage": "https://github.com/vaarvik/bromaid#readme",
+  "bugs": {
+    "url": "https://github.com/vaarvik/bromaid/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",

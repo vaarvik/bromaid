@@ -70,6 +70,7 @@ The whole thing renders at build time. The browser receives an inline SVG and no
 
 | Package | What it does |
 | --- | --- |
+| [`bromaid`](./packages/bromaid) | Batteries-included umbrella package. Installs `elkjs` and re-exports the whole pipeline. |
 | [`@bromaid/core`](./packages/core) | Tokenizer, parser, AST, structured errors. Pure TS, no deps. |
 | [`@bromaid/layout`](./packages/layout) | Wraps `elkjs` (no-worker bundle). `Program → LayoutGraph`. |
 | [`@bromaid/renderer`](./packages/renderer) | `LayoutGraph → SVG string`. DOM-free. |
