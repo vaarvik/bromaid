@@ -1,6 +1,6 @@
 {
   "name": "@bromaid/theme",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Theme registry for @bromaid: slug colors, type accents, light/dark palettes.",
   "license": "MIT",
   "repository": {

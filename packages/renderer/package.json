@@ -1,6 +1,6 @@
 {
   "name": "@bromaid/renderer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pure-string SVG renderer for @bromaid LayoutGraph. DOM-free, RSC-safe.",
   "license": "MIT",
   "repository": {
