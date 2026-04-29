@@ -35,6 +35,8 @@ jobs:
         with:
           publish: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer a PAT that can create PRs (repo settings may block GITHUB_TOKEN).
+          # Create `CHANGESETS_TOKEN` with `contents:write` + `pull-requests:write`.
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN || secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

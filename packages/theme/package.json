@@ -42,7 +42,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node --experimental-strip-types scripts/generate-icons.ts && tsup",
+    "build": "pnpm -w tsx packages/theme/scripts/generate-icons.ts && tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
