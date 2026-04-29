@@ -1,6 +1,6 @@
 {
   "name": "@bromaid/layout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ELK-based layout for @bromaid. Server- and edge-runtime safe (no worker).",
   "license": "MIT",
   "repository": {

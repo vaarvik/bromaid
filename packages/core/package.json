@@ -1,6 +1,6 @@
 {
   "name": "@bromaid/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tokenizer, parser, and AST for the bromaid diagrams-as-code DSL.",
   "license": "MIT",
   "repository": {
