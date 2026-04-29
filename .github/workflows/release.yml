@@ -25,9 +25,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
-          # For npm Trusted Publishing (OIDC), avoid generating token-based .npmrc.
+          registry-url: 'https://registry.npmjs.org'
+
+      # npm Trusted Publishing (OIDC) requires npm CLI >= 11.5.1.
+      # Node 22 ships an older npm; upgrade explicitly.
+      - run: npm install -g npm@latest
 
       - run: pnpm i --frozen-lockfile
 
@@ -39,7 +43,7 @@ jobs:
           # Prefer a PAT that can create PRs (repo settings may block GITHUB_TOKEN).
           # Create `CHANGESETS_TOKEN` with `contents:write` + `pull-requests:write`.
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN || secrets.GITHUB_TOKEN }}
-          # Use npm Trusted Publishing (OIDC) instead of an npm token secret.
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
-          NPM_CONFIG_PROVENANCE: true
-
+          # Trusted Publishing: do NOT set NODE_AUTH_TOKEN. Pass NPM_TOKEN as an
+          # empty string so changesets/action doesn't inject an _authToken into
+          # the user .npmrc (which would force token auth and break OIDC).
+          NPM_TOKEN: ''
