@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
+          # For npm Trusted Publishing (OIDC), avoid generating token-based .npmrc.
 
       - run: pnpm i --frozen-lockfile
 
@@ -40,5 +40,6 @@ jobs:
           # Create `CHANGESETS_TOKEN` with `contents:write` + `pull-requests:write`.
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN || secrets.GITHUB_TOKEN }}
           # Use npm Trusted Publishing (OIDC) instead of an npm token secret.
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
           NPM_CONFIG_PROVENANCE: true
 
