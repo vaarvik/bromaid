@@ -20,8 +20,11 @@ const PUNCT: ReadonlySet<string> = new Set(['{', '}', '[', ']', ',']);
 const STOP_RE = /[\s{}\[\],#"]/;
 
 export function tokenize(source: string): Token[] {
+  // Normalize line endings so CRLF inputs can't create stray '\r' tokens that
+  // would otherwise stall the scanner.
+  const normalized = source.replace(/\r\n?/g, '\n');
   const tokens: Token[] = [];
-  const lines = source.split('\n');
+  const lines = normalized.split('\n');
 
   for (let li = 0; li < lines.length; li++) {
     const line = lines[li] ?? '';
@@ -29,7 +32,7 @@ export function tokenize(source: string): Token[] {
 
     while (i < line.length) {
       const ch = line[i];
-      if (ch === ' ' || ch === '\t') {
+      if (ch === ' ' || ch === '\t' || ch === '\r') {
         i++;
         continue;
       }
