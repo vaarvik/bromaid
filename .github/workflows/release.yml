@@ -11,6 +11,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release:
@@ -38,5 +39,6 @@ jobs:
           # Prefer a PAT that can create PRs (repo settings may block GITHUB_TOKEN).
           # Create `CHANGESETS_TOKEN` with `contents:write` + `pull-requests:write`.
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN || secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Use npm Trusted Publishing (OIDC) instead of an npm token secret.
+          NPM_CONFIG_PROVENANCE: true
 
