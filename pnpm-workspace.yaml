@@ -1,4 +1,4 @@
 packages:
   - "packages/*"
   - "examples/next-app-smoke"
-  - "apps/bromaid-com"
+  - "apps/bromaids-com"
