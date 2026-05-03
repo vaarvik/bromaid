@@ -1,6 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { useAnalytics } from './_lib/consent';
 
 type RenderMode = 'dark' | 'light';
 
@@ -52,6 +55,8 @@ export default function Playground({ defaultSource }: { defaultSource: string })
   const debounced = useRef<number | null>(null);
   const canRender = useMemo(() => source.trim().length > 0, [source]);
 
+  const analytics = useAnalytics();
+
   useEffect(() => {
     if (!canRender) {
       setSvg('');
@@ -62,15 +67,38 @@ export default function Playground({ defaultSource }: { defaultSource: string })
     if (debounced.current !== null) window.clearTimeout(debounced.current);
     debounced.current = window.setTimeout(() => {
       void (async () => {
+        const backgroundLabel = background === null ? 'transparent' : 'surface';
+        const sourceLength = source.length;
         setIsRendering(true);
+        analytics.track('render_started', {
+          mode,
+          background: backgroundLabel,
+          sourceLength,
+        });
+        const startedAt = performance.now();
         const out = await renderOnServer({ source, mode, background });
+        const durationMs = Math.round(performance.now() - startedAt);
         setIsRendering(false);
         if (out.ok) {
           setSvg(out.svg);
           setError('');
+          analytics.track('render_succeeded', {
+            mode,
+            background: backgroundLabel,
+            sourceLength,
+            durationMs,
+            svgLength: out.svg.length,
+          });
         } else {
           setSvg('');
           setError(out.error);
+          analytics.track('render_failed', {
+            mode,
+            background: backgroundLabel,
+            sourceLength,
+            durationMs,
+            error: out.error,
+          });
         }
       })();
     }, 250);
@@ -78,7 +106,7 @@ export default function Playground({ defaultSource }: { defaultSource: string })
     return () => {
       if (debounced.current !== null) window.clearTimeout(debounced.current);
     };
-  }, [source, mode, background, canRender]);
+  }, [source, mode, background, canRender, analytics]);
 
   return (
     <main style={{ minHeight: '100vh' }}>
@@ -107,7 +135,11 @@ export default function Playground({ defaultSource }: { defaultSource: string })
             <span style={{ opacity: 0.7 }}>Mode</span>
             <select
               value={mode}
-              onChange={(e) => setMode(e.target.value as RenderMode)}
+              onChange={(e) => {
+                const next = e.target.value as RenderMode;
+                setMode(next);
+                analytics.track('mode_changed', { mode: next });
+              }}
               style={{
                 background: '#121a2a',
                 color: '#e7edf7',
@@ -125,7 +157,13 @@ export default function Playground({ defaultSource }: { defaultSource: string })
             <span style={{ opacity: 0.7 }}>Background</span>
             <select
               value={background === null ? 'transparent' : 'surface'}
-              onChange={(e) => setBackground(e.target.value === 'transparent' ? null : 'surface')}
+              onChange={(e) => {
+                const next = e.target.value === 'transparent' ? null : 'surface';
+                setBackground(next);
+                analytics.track('background_changed', {
+                  background: next === null ? 'transparent' : 'surface',
+                });
+              }}
               style={{
                 background: '#121a2a',
                 color: '#e7edf7',
@@ -142,6 +180,20 @@ export default function Playground({ defaultSource }: { defaultSource: string })
           <div style={{ fontSize: 13, opacity: 0.7 }}>
             {isRendering ? 'Rendering…' : error ? 'Error' : 'OK'}
           </div>
+
+          <Link
+            href="/privacy"
+            style={{
+              fontSize: 12,
+              opacity: 0.6,
+              color: 'inherit',
+              textDecoration: 'none',
+              borderLeft: '1px solid rgba(255,255,255,0.14)',
+              paddingLeft: 12,
+            }}
+          >
+            Privacy
+          </Link>
         </div>
       </header>
 

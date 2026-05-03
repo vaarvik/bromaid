@@ -1,4 +1,8 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
+
+import { ConsentBanner } from './_components/consent-banner';
+import { PageviewTracker } from './_components/pageview-tracker';
+import { ConsentProvider } from './_lib/consent';
 
 export const metadata = {
   title: 'bromaid — playground',
@@ -17,7 +21,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           color: '#e7edf7',
         }}
       >
-        {children}
+        <ConsentProvider>
+          <Suspense fallback={null}>
+            <PageviewTracker />
+          </Suspense>
+          {children}
+          <ConsentBanner />
+        </ConsentProvider>
       </body>
     </html>
   );
