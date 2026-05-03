@@ -31,6 +31,21 @@ type RenderResponse = RenderOk | RenderErr;
 
 const LAYOUT_STORAGE_KEY = 'bromaid:playground:layout';
 
+const navLinkStyle: React.CSSProperties = {
+  color: 'inherit',
+  opacity: 0.72,
+  textDecoration: 'none',
+  letterSpacing: 0.4,
+};
+
+const selectStyle: React.CSSProperties = {
+  background: '#121a2a',
+  color: '#e7edf7',
+  border: '1px solid rgba(255,255,255,0.14)',
+  borderRadius: 4,
+  padding: '6px',
+};
+
 function isLayout(value: Record<string, number | string | boolean | null>): value is Layout {
   for (const v of Object.values(value)) {
     if (typeof v !== 'number' || !Number.isFinite(v)) return false;
@@ -288,98 +303,94 @@ export default function Playground({ defaultSource }: { defaultSource: string })
       <header
         style={{
           display: 'flex',
-          gap: 12,
+          gap: 18,
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 18px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(9,13,20,0.75)',
+          padding: '14px 22px',
+          borderBottom: '1px solid rgba(255,255,255,0.10)',
+          background: 'rgba(9,13,20,0.85)',
           backdropFilter: 'blur(10px)',
           flex: '0 0 auto',
           zIndex: 10,
         }}
       >
-        <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-          <div style={{ fontWeight: 650, letterSpacing: 0.2 }}>bromaid</div>
-          <div style={{ opacity: 0.7, fontSize: 13 }}>playground</div>
-        </div>
+        <Link
+          href="/"
+          aria-label="bromaids home"
+          style={{
+            color: 'inherit',
+            textDecoration: 'none',
+            fontSize: 18,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          bromaids
+        </Link>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
-            <span style={{ opacity: 0.7 }}>Mode</span>
-            <select
-              value={mode}
-              onChange={(e) => {
-                const next = e.target.value as RenderMode;
-                setMode(next);
-                analytics.track('mode_changed', { mode: next });
-              }}
-              style={{
-                background: '#121a2a',
-                color: '#e7edf7',
-                border: '1px solid rgba(255,255,255,0.14)',
-                borderRadius: 4,
-                padding: '6px 10px',
-              }}
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', fontSize: 13 }}>
+          <nav style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <Link href="/docs" style={navLinkStyle}>
+              Docs
+            </Link>
+            <Link href="/spec" style={navLinkStyle}>
+              Spec
+            </Link>
+            <a
+              href="https://github.com/vaarvik/bromaid"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="GitHub repository"
+              title="GitHub"
+              style={{ ...navLinkStyle, display: 'inline-flex', alignItems: 'center' }}
             >
-              <option value="dark">dark</option>
-              <option value="light">light</option>
-            </select>
-          </label>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55v-1.93c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+              </svg>
+            </a>
+          </nav>
 
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
-            <span style={{ opacity: 0.7 }}>Background</span>
-            <select
-              value={background === null ? 'transparent' : 'surface'}
-              onChange={(e) => {
-                const next = e.target.value === 'transparent' ? null : 'surface';
-                setBackground(next);
-                analytics.track('background_changed', {
-                  background: next === null ? 'transparent' : 'surface',
-                });
-              }}
-              style={{
-                background: '#121a2a',
-                color: '#e7edf7',
-                border: '1px solid rgba(255,255,255,0.14)',
-                borderRadius: 4,
-                padding: '6px 10px',
-              }}
-            >
-              <option value="surface">surface</option>
-              <option value="transparent">transparent</option>
-            </select>
-          </label>
+          <span
+            aria-hidden
+            style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.12)' }}
+          />
 
-          <div style={{ fontSize: 13, opacity: 0.7 }}>
-            {isRendering ? 'Rendering…' : error ? 'Error' : 'OK'}
-          </div>
-
-          <Link
-            href="/spec"
-            style={{
-              fontSize: 12,
-              opacity: 0.6,
-              color: 'inherit',
-              textDecoration: 'none',
-              borderLeft: '1px solid rgba(255,255,255,0.14)',
-              paddingLeft: 12,
+          <select
+            aria-label="Mode"
+            value={mode}
+            onChange={(e) => {
+              const next = e.target.value as RenderMode;
+              setMode(next);
+              analytics.track('mode_changed', { mode: next });
             }}
+            style={selectStyle}
           >
-            Spec
-          </Link>
+            <option value="dark">dark</option>
+            <option value="light">light</option>
+          </select>
 
-          <Link
-            href="/privacy"
-            style={{
-              fontSize: 12,
-              opacity: 0.6,
-              color: 'inherit',
-              textDecoration: 'none',
+          <select
+            aria-label="Background"
+            value={background === null ? 'transparent' : 'surface'}
+            onChange={(e) => {
+              const next = e.target.value === 'transparent' ? null : 'surface';
+              setBackground(next);
+              analytics.track('background_changed', {
+                background: next === null ? 'transparent' : 'surface',
+              });
             }}
+            style={selectStyle}
           >
-            Privacy
-          </Link>
+            <option value="surface">surface</option>
+            <option value="transparent">transparent</option>
+          </select>
+
         </div>
       </header>
 

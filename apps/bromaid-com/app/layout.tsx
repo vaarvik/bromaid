@@ -5,7 +5,7 @@ import { PageviewTracker } from './_components/pageview-tracker';
 import { ConsentProvider } from './_lib/consent';
 
 export const metadata = {
-  title: 'bromaid — playground',
+  title: 'bromaids.com — diagrams-as-code playground',
   description: 'Parse and render bromaid diagrams into SVG.',
 };
 
