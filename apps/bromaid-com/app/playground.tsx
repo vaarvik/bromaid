@@ -336,6 +336,9 @@ export default function Playground({ defaultSource }: { defaultSource: string })
             <Link href="/spec" style={navLinkStyle}>
               Spec
             </Link>
+            <Link href="/privacy" style={navLinkStyle}>
+              Privacy
+            </Link>
             <a
               href="https://github.com/vaarvik/bromaid"
               target="_blank"
