@@ -1,10 +1,30 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
 
+import { Breadcrumbs } from '../_components/breadcrumbs';
+import { JsonLd } from '../_components/json-ld';
+import { TryCta } from '../_components/try-cta';
+import { breadcrumbLd, webPageLd } from '../_lib/structured-data';
 import { ConsentControls } from './consent-controls';
 
-export const metadata = {
-  title: 'bromaid — privacy policy',
-  description: 'How bromaid.com handles cookies, analytics, and personal data.',
+const privacyTitle = 'Privacy policy';
+const privacyDescription =
+  'How bromaid.com handles cookies, analytics (PostHog), consent, server logs, and personal data. Read what is collected, why, and how to opt out.';
+
+export const metadata: Metadata = {
+  title: privacyTitle,
+  description: privacyDescription,
+  alternates: { canonical: '/privacy' },
+  openGraph: {
+    title: `${privacyTitle} — bromaid`,
+    description: privacyDescription,
+    url: '/privacy',
+    type: 'article',
+  },
+  twitter: {
+    title: `${privacyTitle} — bromaid`,
+    description: privacyDescription,
+  },
+  robots: { index: true, follow: true },
 };
 
 export const dynamic = 'force-static';
@@ -40,12 +60,21 @@ const linkStyle = {
   textUnderlineOffset: 2,
 } as const;
 
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Privacy', path: '/privacy' },
+];
+
 export default function PrivacyPage() {
   return (
     <main style={pageStyle}>
-      <Link href="/" style={linkStyle}>
-        ← Back to playground
-      </Link>
+      <JsonLd
+        id="ld-page-privacy"
+        data={webPageLd({ name: privacyTitle, description: privacyDescription, path: '/privacy' })}
+      />
+      <JsonLd id="ld-breadcrumb-privacy" data={breadcrumbLd(crumbs)} />
+      <Breadcrumbs crumbs={crumbs} />
+      <TryCta label="Ready to render a diagram? Open the playground." />
 
       <h1 style={h1Style}>Privacy policy</h1>
       <div style={subtleStyle}>Last updated: May 3, 2026</div>

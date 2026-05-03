@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   );
   const attrRows = ATTR_KEYS.map((k) => [k, ATTR_KEY_META[k]] as const);
 
-  const microExample = (await readExample('micro')).trim();
+  const microExample = (await readExample('simple')).trim();
 
   const md = `<!--
   AUTO-GENERATED. Do not edit by hand.

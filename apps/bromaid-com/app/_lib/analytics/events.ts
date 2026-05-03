@@ -38,6 +38,15 @@ export type EventMap = {
   };
   readonly consent_granted: Record<string, never>;
   readonly consent_revoked: Record<string, never>;
+  readonly download_clicked: {
+    readonly format: 'svg' | 'png';
+    readonly svgLength: number;
+    readonly pngBytes?: number;
+  };
+  readonly download_failed: {
+    readonly format: 'svg' | 'png';
+    readonly error: string;
+  };
 };
 
 export type EventName = keyof EventMap;

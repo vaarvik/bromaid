@@ -16,50 +16,37 @@
 ## At a glance
 
 ```bro
+# Small SaaS — single region, web + api + data, one third-party.
+
 actor user "User"
-actor admin "Admin"
+github gh "GitHub" "CI/CD"
+stripe stripe "Stripe" "Payments"
 
-region aws:eu-west-1 "AWS EU-WEST-1" {
+region aws:eu-west-1 "Production" {
   addon "CloudTrail" [slug: aws:cloudtrail]
-  addon "Inspector" [slug: aws:inspector]
 
-  vpc "Production VPC" {
+  vpc "VPC" {
     subnet.public "Public" {
-      lb "Load Balancer"
-      gateway "API Gateway"
+      service lb "Load Balancer"
     }
-    subnet.private "Services" {
-      auth "Auth Service"
-      orders "Orders Service"
-      payments "Payments Service"
-      notifications "Notifications"
+    subnet.private "App" {
+      nextjs web "Web"
+      service api "API"
     }
     subnet.private "Data" {
-      db users-db "Users DB"
-      db orders-db "Orders DB"
-      cache "Redis Cache"
+      db postgres "PostgreSQL"
+      redis cache "Redis"
     }
   }
 }
 
-external stripe "Stripe"
-external sendgrid "SendGrid"
-external datadog "Datadog"
-
 edge user -> lb
-edge admin -> lb
-edge lb -> gateway
-edge gateway -> auth
-edge gateway -> orders
-edge gateway -> payments
-edge auth -> users-db
-edge orders -> orders-db
-edge orders -> cache
-edge orders -> notifications
-edge payments -> stripe
-edge notifications -> sendgrid
-edge orders -> datadog
-edge payments -> datadog
+edge lb -> web
+edge web -> api
+edge api -> postgres
+edge api -> cache
+edge api -> stripe [label: charges]
+edge gh -> lb [label: deploy]
 ```
 
 ## Lexical structure

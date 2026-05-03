@@ -1,23 +1,31 @@
-region aws:eu-north-1 "AWS EU-NORTH-1" {
-  addon "CloudTrail" [slug: aws:cloudtrail]
-  addon "GuardDuty" [slug: aws:guardduty]
+# Small SaaS — single region, web + api + data, one third-party.
 
-  vpc "VPC 1N" {
+actor user "User"
+github gh "GitHub" "CI/CD"
+stripe stripe "Stripe" "Payments"
+
+region aws:eu-west-1 "Production" {
+  addon "CloudTrail" [slug: aws:cloudtrail]
+
+  vpc "VPC" {
     subnet.public "Public" {
-      proxy "Proxy → EU-Central"
-      router "Router North"
+      service lb "Load Balancer"
     }
-    subnet.private "Private" {
-      db tenants "EU Tenant DBs"
-      db core "EU Core DB"
+    subnet.private "App" {
+      nextjs web "Web"
+      service api "API"
+    }
+    subnet.private "Data" {
+      db postgres "PostgreSQL"
+      redis cache "Redis"
     }
   }
 }
 
-actor developer "Developer" "Tailscale VPN"
-actor github "GitHub"
-
-edge developer -> proxy
-edge github -> proxy [label: CICD]
-edge proxy -> tenants
-edge router -> core
+edge user -> lb
+edge lb -> web
+edge web -> api
+edge api -> postgres
+edge api -> cache
+edge api -> stripe [label: charges]
+edge gh -> lb [label: deploy]

@@ -28,8 +28,8 @@ describe('renderSVG', () => {
     const program = parse(await loadExample('simple'));
     const graph = await layout(program);
     const svg = renderSVG(graph);
-    expect(svg).toContain('Proxy → EU-Central');
-    expect(svg).toContain('Developer');
+    expect(svg).toContain('Load Balancer');
+    expect(svg).toContain('PostgreSQL');
     expect(svg).toContain('GitHub');
   });
 

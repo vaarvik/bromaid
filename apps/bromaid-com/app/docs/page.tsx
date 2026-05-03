@@ -1,12 +1,32 @@
+import type { Metadata } from 'next';
 import { marked } from 'marked';
-import Link from 'next/link';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-export const metadata = {
-  title: 'bromaids — docs',
-  description:
-    'Install instructions and overview for bromaid, the diagrams-as-code TypeScript toolkit.',
+import { Breadcrumbs } from '../_components/breadcrumbs';
+import { JsonLd } from '../_components/json-ld';
+import { TryCta } from '../_components/try-cta';
+import { siteName } from '../_lib/site';
+import { breadcrumbLd, techArticleLd, webPageLd } from '../_lib/structured-data';
+
+const docsTitle = `${siteName} docs — install, quick start, API`;
+const docsDescription =
+  'Install instructions, quick-start examples, API reference, and theming guide for bromaid, the diagrams-as-code TypeScript toolkit.';
+
+export const metadata: Metadata = {
+  title: 'Docs',
+  description: docsDescription,
+  alternates: { canonical: '/docs' },
+  openGraph: {
+    title: docsTitle,
+    description: docsDescription,
+    url: '/docs',
+    type: 'article',
+  },
+  twitter: {
+    title: docsTitle,
+    description: docsDescription,
+  },
 };
 
 export const dynamic = 'force-static';
@@ -22,11 +42,10 @@ const pageStyle = {
   color: '#e6e7e8',
 } as const;
 
-const linkStyle = {
-  color: '#9ec5ff',
-  textDecoration: 'underline',
-  textUnderlineOffset: 2,
-} as const;
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Docs', path: '/docs' },
+];
 
 export default async function DocsPage() {
   const source = await readFile(README_PATH, 'utf8');
@@ -34,10 +53,28 @@ export default async function DocsPage() {
 
   return (
     <main style={pageStyle}>
-      <Link href="/" style={linkStyle}>
-        ← Back to playground
-      </Link>
-      <div className="bromaid-spec" dangerouslySetInnerHTML={{ __html: html }} />
+      <JsonLd
+        id="ld-page-docs"
+        data={webPageLd({ name: docsTitle, description: docsDescription, path: '/docs' })}
+      />
+      <JsonLd
+        id="ld-article-docs"
+        data={techArticleLd({
+          headline: docsTitle,
+          description: docsDescription,
+          path: '/docs',
+          section: 'Documentation',
+        })}
+      />
+      <JsonLd id="ld-breadcrumb-docs" data={breadcrumbLd(crumbs)} />
+      <Breadcrumbs crumbs={crumbs} />
+      <TryCta label="Skip the docs and try bromaid live — paste DSL, get SVG." />
+      <article
+        className="bromaid-spec"
+        itemScope
+        itemType="https://schema.org/TechArticle"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
       <style>{`
         .bromaid-spec h1 { font-size: 28px; margin: 24px 0 12px; }
         .bromaid-spec h2 { font-size: 21px; margin: 32px 0 10px; border-bottom: 1px solid #2c2f31; padding-bottom: 6px; }

@@ -1,58 +1,81 @@
-actor user "End User"
-actor developer "Developer" "Tailscale"
-github gh "GitHub"
+# Standard production SaaS — single region, single VPC.
+# Edge → app → data, with the usual third-party tools on the side.
 
-cloudflare cf "Cloudflare" "DNS + WAF + CDN"
-stripe stripe "Stripe" "Billing"
+actor user "End user"
+actor admin "Admin"
+
+github gh "GitHub" "Source + CI/CD"
+cloudflare cf "Cloudflare" "DNS + CDN + WAF"
+
+stripe stripe "Stripe" "Payments"
+sendgrid mail "SendGrid" "Transactional email"
 posthog ph "PostHog" "Product analytics"
 intercom ic "Intercom" "Support chat"
 datadog dd "Datadog" "Logs + metrics + traces"
 
-region aws:eu-west-1 "EU Production (single-region SaaS)" {
+region aws:eu-west-1 "Production — eu-west-1" {
   addon "CloudTrail" [slug: aws:cloudtrail]
   addon "GuardDuty" [slug: aws:guardduty]
   addon "Inspector" [slug: aws:inspector]
 
-  vpc "VPC" {
-    subnet.public "Edge / Public" {
-      nextjs web "Next.js Web" "RSC + API routes"
-      service api "Core API" "REST + Webhooks"
-      service ws "Realtime Gateway" "WebSockets"
-      group workers "Async Workers" {
-        service mailer "Email Worker"
-        service billing "Billing Worker"
-        service sync "Sync Worker"
+  vpc "Production VPC" {
+    subnet.public "Public" {
+      service lb "Load Balancer" "ALB"
+    }
+
+    subnet.private "Application" {
+      nextjs web "Web" "Next.js — RSC + API routes"
+      service api "API" "REST + Webhooks"
+      service ws "Realtime" "WebSocket gateway"
+      keycloak auth "Keycloak" "OIDC / SSO"
+
+      group workers "Background workers" {
+        service mailer "Email worker"
+        service billing "Billing worker"
+        service jobs "Job runner"
       }
     }
+
     subnet.private "Data" {
-      db postgres "Postgres" "Primary"
-      redis cache "Redis" "Sessions + rate limits"
+      db postgres "PostgreSQL" "Primary"
+      redis cache "Redis" "Cache + queue"
       s3 blobs "S3" "User uploads"
-    }
-    subnet.private "Platform" {
-      keycloak kc "Keycloak" "OIDC / SSO"
-      coolify deploy "Coolify" "App deploys"
     }
   }
 }
 
-# Traffic + auth
+# Edge ingress
 edge user -> cf
-edge cf -> web
-edge web -> kc [label: login]
-edge web -> api
-edge web -> ws [label: realtime]
+edge admin -> cf
+edge cf -> lb
+edge lb -> web
+edge lb -> api
+edge lb -> ws
 
-# Data + async
+# App
+edge web -> api
+edge web -> auth [label: login]
+edge api -> auth [label: verify]
+
+# Data
 edge api -> postgres
 edge api -> cache
 edge api -> blobs
-edge api -> workers [label: enqueue]
 edge ws -> cache
+edge api -> workers [label: enqueue]
+edge workers -> postgres
+edge workers -> cache
 
-# Deploy + observability + business tools
-edge gh -> deploy [label: CI/CD]
-edge api -> dd
+# Async side-effects
+edge mailer -> mail
+edge billing -> stripe
+edge stripe -> api [label: webhooks]
+
+# Deploys
+edge gh -> lb [label: CI/CD]
+
+# Observability + product tools
 edge web -> ph
 edge web -> ic
-edge api -> stripe [label: webhooks]
+edge api -> dd
+edge workers -> dd

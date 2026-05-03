@@ -1,12 +1,32 @@
+import type { Metadata } from 'next';
 import { marked } from 'marked';
-import Link from 'next/link';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-export const metadata = {
-  title: 'bromaid — DSL specification',
-  description:
-    'Canonical reference for the bromaid diagrams-as-code DSL. Auto-generated from the parser schema.',
+import { Breadcrumbs } from '../_components/breadcrumbs';
+import { JsonLd } from '../_components/json-ld';
+import { TryCta } from '../_components/try-cta';
+import { siteName } from '../_lib/site';
+import { breadcrumbLd, techArticleLd, webPageLd } from '../_lib/structured-data';
+
+const specTitle = `${siteName} DSL specification — canonical reference`;
+const specDescription =
+  'Canonical reference for the bromaid diagrams-as-code DSL. Auto-generated from the parser schema. Covers grammar, statements, attributes, edges, groups, and rendering semantics.';
+
+export const metadata: Metadata = {
+  title: 'DSL specification',
+  description: specDescription,
+  alternates: { canonical: '/spec' },
+  openGraph: {
+    title: specTitle,
+    description: specDescription,
+    url: '/spec',
+    type: 'article',
+  },
+  twitter: {
+    title: specTitle,
+    description: specDescription,
+  },
 };
 
 export const dynamic = 'force-static';
@@ -22,15 +42,10 @@ const pageStyle = {
   color: '#e6e7e8',
 } as const;
 
-const linkStyle = {
-  color: '#9ec5ff',
-  textDecoration: 'underline',
-  textUnderlineOffset: 2,
-} as const;
-
-const proseStyle = {
-  // Lightweight prose styling. Headings, code, tables — all native rendering.
-} as const;
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Spec', path: '/spec' },
+];
 
 export default async function SpecPage() {
   const source = await readFile(SPEC_PATH, 'utf8');
@@ -38,12 +53,26 @@ export default async function SpecPage() {
 
   return (
     <main style={pageStyle}>
-      <Link href="/" style={linkStyle}>
-        ← Back to playground
-      </Link>
-      <div
+      <JsonLd
+        id="ld-page-spec"
+        data={webPageLd({ name: specTitle, description: specDescription, path: '/spec' })}
+      />
+      <JsonLd
+        id="ld-article-spec"
+        data={techArticleLd({
+          headline: specTitle,
+          description: specDescription,
+          path: '/spec',
+          section: 'Specification',
+        })}
+      />
+      <JsonLd id="ld-breadcrumb-spec" data={breadcrumbLd(crumbs)} />
+      <Breadcrumbs crumbs={crumbs} />
+      <TryCta label="See the spec in action — open the playground and edit a live diagram." />
+      <article
         className="bromaid-spec"
-        style={proseStyle}
+        itemScope
+        itemType="https://schema.org/TechArticle"
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <style>{`

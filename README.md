@@ -222,8 +222,8 @@ If you don't want the umbrella, install pieces directly:
 ## Examples
 
 - [`examples/micro.bro`](./examples/micro.bro) — minimal three-node diagram.
-- [`examples/simple.bro`](./examples/simple.bro) — single region, a few services.
-- [`examples/full.bro`](./examples/full.bro) — multi-region production architecture.
+- [`examples/simple.bro`](./examples/simple.bro) — single region, web + api + data.
+- [`examples/full.bro`](./examples/full.bro) — production SaaS: edge, app, data, workers, third parties.
 - [`examples/next-app-smoke`](./examples/next-app-smoke) — Next.js App Router smoke test.
 
 ---

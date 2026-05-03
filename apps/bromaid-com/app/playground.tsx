@@ -46,6 +46,111 @@ const selectStyle: React.CSSProperties = {
   padding: '6px',
 };
 
+const downloadButtonStyle: React.CSSProperties = {
+  background: '#121a2a',
+  color: '#e7edf7',
+  border: '1px solid rgba(255,255,255,0.14)',
+  borderRadius: 4,
+  padding: '6px 10px',
+  cursor: 'pointer',
+  fontSize: 13,
+  lineHeight: 1,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+};
+
+function DownloadIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+  );
+}
+
+function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function readSvgPixelSize(svg: string): { width: number; height: number } {
+  const parsed = new DOMParser().parseFromString(svg, 'image/svg+xml');
+  const root = parsed.documentElement;
+  const widthAttr = root.getAttribute('width');
+  const heightAttr = root.getAttribute('height');
+  const w = widthAttr === null ? NaN : parseFloat(widthAttr);
+  const h = heightAttr === null ? NaN : parseFloat(heightAttr);
+  if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+    return { width: w, height: h };
+  }
+  const viewBox = root.getAttribute('viewBox');
+  if (viewBox !== null) {
+    const parts = viewBox.split(/[\s,]+/).map(Number);
+    if (parts.length === 4) {
+      const vw = parts[2];
+      const vh = parts[3];
+      if (
+        typeof vw === 'number' &&
+        typeof vh === 'number' &&
+        Number.isFinite(vw) &&
+        Number.isFinite(vh) &&
+        vw > 0 &&
+        vh > 0
+      ) {
+        return { width: vw, height: vh };
+      }
+    }
+  }
+  return { width: 1024, height: 768 };
+}
+
+async function svgToPngBlob(svg: string, scale: number): Promise<Blob> {
+  const { width, height } = readSvgPixelSize(svg);
+  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  try {
+    const img = new Image();
+    img.decoding = 'sync';
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load SVG for PNG export.'));
+      img.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvas.getContext('2d');
+    if (ctx === null) throw new Error('Canvas 2D context unavailable.');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b === null) reject(new Error('PNG encoding failed.'));
+        else resolve(b);
+      }, 'image/png');
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function isLayout(value: Record<string, number | string | boolean | null>): value is Layout {
   for (const v of Object.values(value)) {
     if (typeof v !== 'number' || !Number.isFinite(v)) return false;
@@ -134,6 +239,34 @@ export default function Playground({ defaultSource }: { defaultSource: string })
       // Ignore corrupted persisted layout.
     }
   }, [groupRef]);
+
+  const canDownload = svg.length > 0 && error === '';
+
+  const downloadSvg = useCallback(() => {
+    if (svg.length === 0) return;
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    triggerDownload(blob, 'bromaid.svg');
+    analytics.track('download_clicked', { format: 'svg', svgLength: svg.length });
+  }, [svg, analytics]);
+
+  const downloadPng = useCallback(() => {
+    if (svg.length === 0) return;
+    void (async () => {
+      try {
+        const blob = await svgToPngBlob(svg, 2);
+        triggerDownload(blob, 'bromaid.png');
+        analytics.track('download_clicked', {
+          format: 'png',
+          svgLength: svg.length,
+          pngBytes: blob.size,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'PNG export failed.';
+        setError(msg);
+        analytics.track('download_failed', { format: 'png', error: msg });
+      }
+    })();
+  }, [svg, analytics]);
 
   const onLayoutChanged = useCallback((layout: Layout) => {
     try {
@@ -336,6 +469,9 @@ export default function Playground({ defaultSource }: { defaultSource: string })
             <Link href="/spec" style={navLinkStyle}>
               Spec
             </Link>
+            <Link href="/faq" style={navLinkStyle}>
+              FAQ
+            </Link>
             <Link href="/privacy" style={navLinkStyle}>
               Privacy
             </Link>
@@ -358,41 +494,6 @@ export default function Playground({ defaultSource }: { defaultSource: string })
               </svg>
             </a>
           </nav>
-
-          <span
-            aria-hidden
-            style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.12)' }}
-          />
-
-          <select
-            aria-label="Mode"
-            value={mode}
-            onChange={(e) => {
-              const next = e.target.value as RenderMode;
-              setMode(next);
-              analytics.track('mode_changed', { mode: next });
-            }}
-            style={selectStyle}
-          >
-            <option value="dark">dark</option>
-            <option value="light">light</option>
-          </select>
-
-          <select
-            aria-label="Background"
-            value={background === null ? 'transparent' : 'surface'}
-            onChange={(e) => {
-              const next = e.target.value === 'transparent' ? null : 'surface';
-              setBackground(next);
-              analytics.track('background_changed', {
-                background: next === null ? 'transparent' : 'surface',
-              });
-            }}
-            style={selectStyle}
-          >
-            <option value="surface">surface</option>
-            <option value="transparent">transparent</option>
-          </select>
 
         </div>
       </header>
@@ -456,6 +557,68 @@ export default function Playground({ defaultSource }: { defaultSource: string })
               collapsed={previewCollapsed}
               onToggle={togglePreview}
               side="right"
+              actions={
+                <>
+                  <select
+                    aria-label="Mode"
+                    value={mode}
+                    onChange={(e) => {
+                      const next = e.target.value as RenderMode;
+                      setMode(next);
+                      analytics.track('mode_changed', { mode: next });
+                    }}
+                    style={selectStyle}
+                  >
+                    <option value="dark">dark</option>
+                    <option value="light">light</option>
+                  </select>
+                  <select
+                    aria-label="Background"
+                    value={background === null ? 'transparent' : 'surface'}
+                    onChange={(e) => {
+                      const next = e.target.value === 'transparent' ? null : 'surface';
+                      setBackground(next);
+                      analytics.track('background_changed', {
+                        background: next === null ? 'transparent' : 'surface',
+                      });
+                    }}
+                    style={selectStyle}
+                  >
+                    <option value="surface">surface</option>
+                    <option value="transparent">transparent</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={downloadSvg}
+                    disabled={!canDownload}
+                    aria-label="Download SVG"
+                    title="Download SVG"
+                    style={{
+                      ...downloadButtonStyle,
+                      opacity: canDownload ? 1 : 0.4,
+                      cursor: canDownload ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    <DownloadIcon />
+                    SVG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadPng}
+                    disabled={!canDownload}
+                    aria-label="Download PNG"
+                    title="Download PNG (2x)"
+                    style={{
+                      ...downloadButtonStyle,
+                      opacity: canDownload ? 1 : 0.4,
+                      cursor: canDownload ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    <DownloadIcon />
+                    PNG
+                  </button>
+                </>
+              }
             >
               <div style={{ height: '100%', overflow: 'auto', boxSizing: 'border-box' }}>
                 {error ? (
@@ -492,6 +655,7 @@ export default function Playground({ defaultSource }: { defaultSource: string })
 function PaneShell({
   title,
   meta,
+  actions,
   collapsed,
   onToggle,
   side,
@@ -499,6 +663,7 @@ function PaneShell({
 }: {
   readonly title: string;
   readonly meta: string;
+  readonly actions?: React.ReactNode;
   readonly collapsed: boolean;
   readonly onToggle: () => void;
   readonly side: 'left' | 'right';
@@ -545,6 +710,7 @@ function PaneShell({
           <div style={{ fontSize: 13, fontWeight: 600 }}>{title}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {actions}
           <div style={{ fontSize: 12, opacity: 0.7 }}>{meta}</div>
           {side === 'right' ? (
             <button
