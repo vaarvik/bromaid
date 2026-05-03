@@ -454,7 +454,7 @@ export default function Playground({ defaultSource }: { defaultSource: string })
               onToggle={togglePreview}
               side="right"
             >
-              <div style={{ height: '100%', overflow: 'auto', padding: 12, boxSizing: 'border-box' }}>
+              <div style={{ height: '100%', overflow: 'auto', boxSizing: 'border-box' }}>
                 {error ? (
                   <pre
                     style={{
