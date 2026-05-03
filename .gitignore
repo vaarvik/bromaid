@@ -11,6 +11,8 @@ coverage/
 .env
 .env.*
 !.env.example
+.open-next/
+.wrangler/
 
 # Smoke-test artifacts
 /architecture.svg

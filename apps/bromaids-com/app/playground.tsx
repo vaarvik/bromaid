@@ -553,7 +553,7 @@ export default function Playground({ defaultSource }: { defaultSource: string })
           >
             <PaneShell
               title="Preview"
-              meta={error ? 'Fix the DSL to render' : 'SVG'}
+              meta={error ? 'Fix the DSL to render' : ''}
               collapsed={previewCollapsed}
               onToggle={togglePreview}
               side="right"

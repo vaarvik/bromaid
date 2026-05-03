@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 export const alt = 'bromaid — diagrams-as-code for TypeScript';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
@@ -17,8 +15,9 @@ export default function OgImage() {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: 80,
-          background:
-            'radial-gradient(circle at 20% 20%, #1a2540 0%, #0b0f17 60%), #0b0f17',
+          backgroundColor: '#0b0f17',
+          backgroundImage:
+            'radial-gradient(circle at 20% 20%, #1a2540 0%, #0b0f17 60%)',
           color: '#e7edf7',
           fontFamily: 'system-ui, sans-serif',
         }}
