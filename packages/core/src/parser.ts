@@ -1,5 +1,10 @@
 import { BromaidError } from './errors.js';
 import { closestMatch } from './names.js';
+import {
+  CONTAINER_KEYWORDS,
+  isCloudSlug,
+  isKnownTypeKeyword,
+} from './schema.js';
 import { tokenize, type Token, type TokenType } from './tokenizer.js';
 import type {
   BromaidContainer,
@@ -10,42 +15,6 @@ import type {
   ContainerKind,
   Program,
 } from './types.js';
-
-const KNOWN_TYPES: ReadonlySet<string> = new Set<string>([
-  'region',
-  'vpc',
-  'group',
-  'subnet.public',
-  'subnet.private',
-  'db',
-  'actor',
-  'external',
-  's3',
-  'service',
-  'addon',
-  'node',
-]);
-
-const CLOUD_SLUG_RE =
-  /^(aws|azure|gcp|github|cloudflare|slack|stripe|keycloak|posthog|intercom|tailscale|coolify|nextjs|redis|datadog|sendgrid|sharepoint|entra|ssm|traefik|oauth2-proxy|hatchet|kuma)(:[a-z0-9_-]+)*$/;
-
-const CONTAINER_KEYWORDS: ReadonlySet<string> = new Set<string>([
-  'region',
-  'vpc',
-  'group',
-]);
-
-function isKnownTypeKeyword(s: string): boolean {
-  if (s.length === 0) return false;
-  const lower = s.toLowerCase();
-  if (KNOWN_TYPES.has(lower)) return true;
-  if (CLOUD_SLUG_RE.test(lower)) return true;
-  return false;
-}
-
-function isCloudSlug(s: string): s is CloudSlug {
-  return CLOUD_SLUG_RE.test(s.toLowerCase());
-}
 
 /**
  * Internal mutable tree used during parsing. Containers carry a writable

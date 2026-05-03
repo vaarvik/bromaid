@@ -356,7 +356,7 @@ export default function Playground({ defaultSource }: { defaultSource: string })
           </div>
 
           <Link
-            href="/privacy"
+            href="/spec"
             style={{
               fontSize: 12,
               opacity: 0.6,
@@ -364,6 +364,18 @@ export default function Playground({ defaultSource }: { defaultSource: string })
               textDecoration: 'none',
               borderLeft: '1px solid rgba(255,255,255,0.14)',
               paddingLeft: 12,
+            }}
+          >
+            Spec
+          </Link>
+
+          <Link
+            href="/privacy"
+            style={{
+              fontSize: 12,
+              opacity: 0.6,
+              color: 'inherit',
+              textDecoration: 'none',
             }}
           >
             Privacy

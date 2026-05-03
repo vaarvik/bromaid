@@ -14,6 +14,7 @@
     "@bromaid/renderer": "workspace:*",
     "@bromaid/theme": "workspace:*",
     "elkjs": "^0.9.3",
+    "marked": "^18.0.3",
     "next": "^15.0.3",
     "posthog-js": "^1.372.6",
     "react": "^19.0.0-rc-66855b96-20241106",

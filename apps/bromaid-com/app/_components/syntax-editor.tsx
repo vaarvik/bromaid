@@ -1,5 +1,11 @@
 'use client';
 
+import {
+  CLOUD_SLUG_RE,
+  CONTAINER_KEYWORDS,
+  CONTAINER_KINDS,
+  KNOWN_NODE_KINDS,
+} from '@bromaid/core';
 import { useCallback, useMemo, useRef } from 'react';
 
 type SpanKind =
@@ -18,25 +24,10 @@ type Span = { readonly kind: SpanKind; readonly text: string };
 
 const STOP_RE = /[\s{}\[\],#"]/;
 
-const CONTAINER_KEYWORDS: ReadonlySet<string> = new Set(['region', 'vpc', 'group']);
-
-const KNOWN_TYPES: ReadonlySet<string> = new Set([
-  'region',
-  'vpc',
-  'group',
-  'subnet.public',
-  'subnet.private',
-  'db',
-  'actor',
-  'external',
-  's3',
-  'service',
-  'addon',
-  'node',
+const KNOWN_TYPES: ReadonlySet<string> = new Set<string>([
+  ...KNOWN_NODE_KINDS,
+  ...CONTAINER_KINDS,
 ]);
-
-const CLOUD_SLUG_RE =
-  /^(aws|azure|gcp|github|cloudflare|slack|stripe|keycloak|posthog|intercom|tailscale|coolify|nextjs|redis|datadog|sendgrid|sharepoint|entra|ssm|traefik|oauth2-proxy|hatchet|kuma)(:[a-z0-9_-]+)*$/;
 
 const MONOKAI: Record<SpanKind, React.CSSProperties> = {
   plain: { color: '#F8F8F2' },

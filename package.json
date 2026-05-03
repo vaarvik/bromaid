@@ -18,6 +18,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "smoke": "tsx scripts/smoke.ts",
+    "gen:spec": "tsx scripts/gen-spec.ts",
     "smoke:next": "pnpm --filter @bromaid-examples/next-app-smoke build",
     "clean": "pnpm -r exec rm -rf dist .turbo node_modules/.cache",
     "changeset": "changeset",

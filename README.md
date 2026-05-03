@@ -48,6 +48,16 @@ edge orders -> stripe [label: payments]
 
 See [`SPEC.md`](./SPEC.md) for the language reference and [`examples/`](./examples) for full samples.
 
+## Docs
+
+| Where | What |
+| --- | --- |
+| [`SPEC.md`](./SPEC.md) | Canonical DSL reference. Auto-generated from `packages/core/src/schema.ts`. Regenerate with `pnpm gen:spec`. |
+| [bromaid.com/spec](https://bromaid.com/spec) | Same SPEC, rendered. Best link to share. |
+| [bromaid.com/llms.txt](https://bromaid.com/llms.txt) | Same SPEC as `text/plain` for LLMs / agents. Drop into a prompt or fetch from an MCP tool. |
+| [`examples/`](./examples) | Full DSL samples (`micro.bro`, `simple.bro`, `full.bro`). |
+| [`packages/core/src/schema.ts`](./packages/core/src/schema.ts) | Single source of truth: enums, regex, descriptions, Zod schemas. Read this if you want to extend the DSL. |
+
 ## Use it in a Next.js page (zero client JS)
 
 ```tsx
