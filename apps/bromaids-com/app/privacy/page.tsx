@@ -8,7 +8,7 @@ import { ConsentControls } from './consent-controls';
 
 const privacyTitle = 'Privacy policy';
 const privacyDescription =
-  'How bromaid.com handles cookies, analytics (PostHog), consent, server logs, and personal data. Read what is collected, why, and how to opt out.';
+  'How bromaids.com handles cookies, analytics (PostHog), consent, server logs, and personal data. Read what is collected, why, and how to opt out.';
 
 export const metadata: Metadata = {
   title: privacyTitle,
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
 
       <h2 style={h2Style}>What this site is</h2>
       <p>
-        bromaid.com is a public playground for the open-source <code>bromaid</code> diagram DSL.
+        bromaids.com is a public playground for the open-source <code>bromaid</code> diagram DSL.
         You can paste DSL source into the editor and the page renders it to SVG. The playground is
         a static Next.js site with a single API route that performs the render.
       </p>
@@ -130,18 +130,76 @@ export default function PrivacyPage() {
 
       <ConsentControls />
 
+      <h2 style={h2Style}>Legal basis (GDPR)</h2>
+      <p>
+        We rely on your <strong>consent</strong> (Art. 6(1)(a) GDPR) for analytics cookies and
+        events. Operating the render endpoint and securing the service relies on our{' '}
+        <strong>legitimate interests</strong> (Art. 6(1)(f) GDPR) in providing and protecting the
+        playground.
+      </p>
+
+      <h2 style={h2Style}>Data retention</h2>
+      <ul>
+        <li>Diagram source: not persisted; processed in memory and discarded after the response.</li>
+        <li>Server logs: retained by our hosting provider for up to 30 days, then rotated.</li>
+        <li>
+          Analytics events (PostHog): retained for up to 12 months, then aggregated or deleted.
+        </li>
+        <li>
+          Consent cookie (<code>bromaid_consent</code>): up to ~13 months, or until you reset it.
+        </li>
+      </ul>
+
+      <h2 style={h2Style}>Processors</h2>
+      <p>We share limited data with the following third parties so the site can function:</p>
+      <ul>
+        <li>
+          <strong>Vercel Inc.</strong> — hosting and edge delivery (request logs, IP, user-agent).
+        </li>
+        <li>
+          <strong>PostHog Inc.</strong> — product analytics (only after you accept analytics).
+        </li>
+      </ul>
+
+      <h2 style={h2Style}>International transfers</h2>
+      <p>
+        Our processors may handle data outside the EEA / UK (primarily the United States).
+        Transfers rely on the EU Standard Contractual Clauses and equivalent safeguards published
+        by each provider.
+      </p>
+
+      <h2 style={h2Style}>Your rights</h2>
+      <p>
+        Under GDPR / UK GDPR you have the right to access, rectify, erase, restrict, or port your
+        personal data, and to object to processing. Under CCPA / CPRA you have the right to know,
+        delete, correct, and opt out of the sale or sharing of personal information — we do not
+        sell or share personal information. To exercise any right, email{' '}
+        <a href="mailto:contact@bromaids.com" style={linkStyle}>
+          contact@bromaids.com
+        </a>
+        . You also have the right to lodge a complaint with your local data protection authority.
+      </p>
+
+      <h2 style={h2Style}>Children</h2>
+      <p>
+        bromaids.com is not directed to children under 16. We do not knowingly collect personal
+        data from children. If you believe a child has provided us data, contact us and we will
+        delete it.
+      </p>
+
+      <h2 style={h2Style}>Changes to this policy</h2>
+      <p>
+        We may update this policy as the playground evolves. Material changes will be reflected in
+        the &ldquo;Last updated&rdquo; date at the top of this page; significant changes will be
+        announced in the repository.
+      </p>
+
       <h2 style={h2Style}>Contact</h2>
       <p>
-        Questions about this policy? Open an issue on{' '}
-        <a
-          href="https://github.com/jvarvik/bromaid"
-          style={linkStyle}
-          rel="noreferrer noopener"
-          target="_blank"
-        >
-          the bromaid repository
-        </a>
-        .
+        Data controller: <strong>bromaid</strong>. For privacy questions, email{' '}
+        <a href="mailto:contact@bromaids.com" style={linkStyle}>
+          contact@bromaids.com
+        </a>.
       </p>
     </main>
   );
