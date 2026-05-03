@@ -50,4 +50,3 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, error: message } as const, { status: 400 });
   }
 }
-
