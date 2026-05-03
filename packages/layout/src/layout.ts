@@ -27,10 +27,43 @@ export async function layout(
   program: Program,
   opts: LayoutOptions = {},
 ): Promise<LayoutGraph> {
-  const elk = new ELK();
+  const elk = createElk();
   const root = buildElkGraph(program, opts.elkOptions);
   const laid = await elk.layout(root);
   return flatten(program, laid);
+}
+
+let elkBundleInitialized = false;
+
+// Next.js (and a few other Node-side hosts) define `globalThis.self` so that
+// browser-targeted bundles can load. elkjs's bundled `elk-worker.min.js`
+// branches on `typeof self !== 'undefined'` to pick its export shape: with
+// `self` defined it takes the browser path and never exports a `Worker`
+// constructor, leaving `new ELK()` to throw `_Worker is not a constructor`.
+// Stash `self` around the first construction so the inner module evaluates
+// the Node branch and caches the right exports for every later instance.
+function createElk(): InstanceType<typeof ELK> {
+  if (elkBundleInitialized) return new ELK();
+
+  const isNode =
+    typeof process !== 'undefined' &&
+    typeof (process as { versions?: { node?: string } }).versions?.node === 'string';
+  if (!isNode) {
+    elkBundleInitialized = true;
+    return new ELK();
+  }
+
+  const g = globalThis as { self?: unknown };
+  const hadSelf = 'self' in g;
+  const savedSelf = g.self;
+  try {
+    if (hadSelf) delete g.self;
+    const elk = new ELK();
+    elkBundleInitialized = true;
+    return elk;
+  } finally {
+    if (hadSelf) g.self = savedSelf;
+  }
 }
 
 interface Offset {
