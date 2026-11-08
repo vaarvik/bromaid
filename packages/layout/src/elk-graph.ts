@@ -1,5 +1,6 @@
 import type {
   BromaidContainer,
+  BromaidEdge,
   BromaidElement,
   BromaidNode,
   Program,
@@ -202,9 +203,37 @@ export function buildElkGraph(
   program: Program,
   rootOptions: Readonly<Record<string, string>> = DEFAULT_ROOT_OPTIONS,
 ): ElkNode {
+  // Edges that leave the same node with the same label share one port on
+  // it. ELK routes
+  // edges on one port as a hyperedge: one trunk out of the node that splits
+  // as late as it can, instead of a bundle of parallel lines that are
+  // impossible to follow. Only on plain nodes (a container's ports would
+  // cross its border) and only where two or more edges share the end.
+  const isNode = (id: string) => program.elements.get(id)?.kind === 'node';
+  const count = new Map<string, number>();
+  const outKey = (e: BromaidEdge) => `${e.fromId}\u0000out\u0000${e.label ?? ''}`;
+  for (const e of program.edges) {
+    if (isNode(e.fromId)) count.set(outKey(e), (count.get(outKey(e)) ?? 0) + 1);
+  }
+  const ports = new Map<string, { id: string; side: 'EAST' }[]>();
+  const portIds = new Map<string, string>();
+  const portFor = (node: string, key: string, side: 'EAST'): string => {
+    let id = portIds.get(key);
+    if (id === undefined) {
+      const list = ports.get(node) ?? [];
+      id = `${node}__p${list.length}`;
+      list.push({ id, side });
+      ports.set(node, list);
+      portIds.set(key, id);
+    }
+    return id;
+  };
+
   const elkEdges = program.edges.map((e, i) => ({
     id: `e${i}`,
-    sources: [e.fromId],
+    sources: [(count.get(outKey(e)) ?? 0) >= 2 ? portFor(e.fromId, outKey(e), 'EAST') : e.fromId],
+    // Not on the way in: edges from different nodes sharing a port would
+    // merge into one net and draw lines between nodes that aren't linked.
     targets: [e.toId],
     labels:
       e.label !== null
@@ -218,10 +247,21 @@ export function buildElkGraph(
         : [],
   }));
 
+  const children = program.root.children.map((c) => toElkChild(c, 0));
+  const addPorts = (n: ElkNode): void => {
+    const list = ports.get(n.id);
+    if (list !== undefined) {
+      n.ports = list.map((p) => ({ id: p.id, width: 0, height: 0, layoutOptions: { 'elk.port.side': p.side } }));
+      n.layoutOptions = { ...(n.layoutOptions ?? {}), 'elk.portConstraints': 'FIXED_SIDE' };
+    }
+    for (const c of n.children ?? []) addPorts(c);
+  };
+  for (const c of children) addPorts(c);
+
   return {
     id: 'root',
     layoutOptions: { ...rootOptions },
-    children: program.root.children.map((c) => toElkChild(c, 0)),
+    children,
     edges: elkEdges,
   } satisfies ElkNode;
 }

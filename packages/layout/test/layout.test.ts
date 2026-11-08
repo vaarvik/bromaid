@@ -78,3 +78,46 @@ describe('layout', () => {
     }
   });
 });
+
+describe('edges leaving one node', () => {
+  const src = [
+    'region r "R" {',
+    '  service a "A"',
+    '  service b "B"',
+    '  db x1 "X1"',
+    '  db x2 "X2"',
+    '  db x3 "X3"',
+    '  db y "Y"',
+    '}',
+    'edge a -> x1',
+    'edge a -> x2',
+    'edge a -> x3',
+    'edge b -> x1',
+    'edge b -> y',
+  ].join('\n');
+
+  // Vertical pieces of a node's lines: x and the y range they cover.
+  const verticals = (g: Awaited<ReturnType<typeof layout>>, from: string) => {
+    const out: { x: number; lo: number; hi: number }[] = [];
+    for (const e of g.edges.filter((x) => x.edge.fromId === from))
+      for (let i = 1; i < e.path.length; i++) {
+        const [p, q] = [e.path[i - 1]!, e.path[i]!];
+        if (p.x === q.x) out.push({ x: Math.round(p.x), lo: Math.min(p.y, q.y), hi: Math.max(p.y, q.y) });
+      }
+    return out;
+  };
+
+  it('leave from one point, so they read as one line that splits', async () => {
+    const g = await layout(parse(src));
+    const starts = new Set(g.edges.filter((e) => e.edge.fromId === 'a').map((e) => `${Math.round(e.path[0]!.x)},${Math.round(e.path[0]!.y)}`));
+    expect(starts.size).toBe(1);
+    expect(g.edges).toHaveLength(5);
+  });
+
+  it("don't share a channel with another node's lines (no false links)", async () => {
+    const g = await layout(parse(src));
+    const a = verticals(g, 'a');
+    for (const v of verticals(g, 'b'))
+      expect(a.some((w) => w.x === v.x && w.lo < v.hi && v.lo < w.hi)).toBe(false);
+  });
+});
