@@ -1,6 +1,6 @@
 {
   "name": "bromaid",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Batteries-included bromaid umbrella package: parse → layout → renderSVG (SVG string).",
   "license": "MIT",
   "repository": {
