@@ -1,5 +1,12 @@
 # @bromaid/renderer
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [6123ef1]
+  - @bromaid/layout@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
