@@ -23,3 +23,7 @@ const graph = await layout(parse('actor user "User"'));
 
 - Root docs and examples: https://github.com/vaarvik/bromaid
 
+
+## Graphs from data
+
+`@bromaid/layout/graph` (no ELK, server-safe): `layoutColumns`, `edgePath`, `placeEdgeLabels`, `highlightForNode` / `highlightForEdge` (`neighbours` | `chain`). `@bromaid/layout` adds `layoutLayered` (ELK) for the same data. See "Column graphs" in the root README.

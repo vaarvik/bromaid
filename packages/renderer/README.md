@@ -23,3 +23,11 @@ const svg = renderSVG(await layout(parse(source)), { theme: defaultTheme, mode: 
 
 - Root docs and examples: https://github.com/vaarvik/bromaid
 
+
+## Interactive graphs
+
+- `@bromaid/renderer/client`: `mount(el, data, options)` → `{ update, highlight, destroy }` (browser only).
+- `@bromaid/renderer/react`: `<Bromaid data={…} />` (client component; React is an optional peer).
+- Main entry (DOM-free): `renderGraphEdgesSVG`, `renderGraphHTML`, `graphCss`.
+
+See "Column graphs" in the root README.
