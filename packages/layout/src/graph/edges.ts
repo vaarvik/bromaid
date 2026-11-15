@@ -84,10 +84,11 @@ export function labelWidth(text: string): number {
 /**
  * Label boxes at the source end of each labelled edge.
  *
- * Every label starts `EDGE_LABEL_INSET` px into the edge. A curve that goes up
- * (or runs flat) gets its label above the line, one that goes down gets it
- * below. Labels of edges leaving the same node stack outward on their side,
- * the flattest edge nearest the line, so they never overlap.
+ * Every label starts `EDGE_LABEL_INSET` px into the edge, on the side the
+ * curve leaves clear: a curve that goes down (or runs flat) gets its label
+ * above the line, one that goes up gets it below, so the label never sits on
+ * its own curve. Labels of edges leaving the same node stack outward on their
+ * side, the flattest edge nearest the line, so they never overlap.
  */
 export function placeEdgeLabels(
   edges: ReadonlyArray<{ readonly edge: GraphEdge; readonly ends: EdgeEnds }>,
@@ -108,8 +109,8 @@ export function placeEdgeLabels(
     for (const i of list) {
       const e = edges[i];
       if (e === undefined) continue;
-      if (e.ends.ty > e.ends.sy + 0.5) down.push(i);
-      else up.push(i);
+      if (e.ends.ty < e.ends.sy - 0.5) up.push(i);
+      else down.push(i);
     }
     const dy = (i: number): number => {
       const e = edges[i];
@@ -136,8 +137,8 @@ export function placeEdgeLabels(
         };
       });
     };
-    place(up, 'above');
-    place(down, 'below');
+    place(down, 'above');
+    place(up, 'below');
   }
   return out;
 }

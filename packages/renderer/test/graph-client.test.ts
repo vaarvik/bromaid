@@ -131,6 +131,8 @@ describe('mount', () => {
     g.highlight('db');
     expect(['db', 'api', 'web', 'worker'].every((id) => on(node(el, id)))).toBe(true);
     expect(on(node(el, 'cache'))).toBe(false);
+    g.highlight('not-in-this-graph');
+    expect(el.querySelector('.bm-graph')?.hasAttribute('data-hl')).toBe(false);
   });
 
   it('focus highlights, Enter clicks, ghosts emit actions, tips show', async () => {

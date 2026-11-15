@@ -154,16 +154,16 @@ describe('edge labels', () => {
   const overlaps = (a: PlacedGraphEdgeLabel, b: PlacedGraphEdgeLabel) =>
     a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
-  it('sits 8px in from the source, above a rising curve and below a falling one', () => {
+  it('sits 8px in from the source, below a rising curve and above a falling one', () => {
     const labels = placeEdgeLabels([
       { edge: { from: 's', to: 'up', label: 'up' }, ends: { sx: 100, sy: 100, tx: 200, ty: 20 } },
       { edge: { from: 's', to: 'dn', label: 'dn' }, ends: { sx: 100, sy: 100, tx: 200, ty: 180 } },
     ]);
     expect(labels[0]?.x).toBe(100 + EDGE_LABEL_INSET);
-    expect(labels[0]?.side).toBe('above');
-    expect((labels[0]?.y ?? 0) + (labels[0]?.height ?? 0)).toBeLessThan(100);
-    expect(labels[1]?.side).toBe('below');
-    expect(labels[1]?.y).toBeGreaterThan(100);
+    expect(labels[0]?.side).toBe('below');
+    expect(labels[0]?.y).toBeGreaterThan(100);
+    expect(labels[1]?.side).toBe('above');
+    expect((labels[1]?.y ?? 0) + (labels[1]?.height ?? 0)).toBeLessThan(100);
   });
 
   it('never overlaps for many edges from one node', () => {

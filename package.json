@@ -22,7 +22,8 @@
     "smoke:next": "pnpm --filter @bromaid-examples/next-app-smoke build",
     "clean": "pnpm -r exec rm -rf dist .turbo node_modules/.cache",
     "changeset": "changeset",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && changeset publish",
+    "example:graphs": "tsx scripts/build-graph-example.ts"
   },
   "devDependencies": {
     "@bromaid/core": "workspace:*",
@@ -34,9 +35,10 @@
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "elkjs": "^0.9.3",
+    "esbuild": "^0.27.7",
     "eslint": "^9.15.0",
-    "tsx": "^4.20.5",
     "tsup": "^8.3.5",
+    "tsx": "^4.20.5",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
   }

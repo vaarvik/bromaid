@@ -19,3 +19,4 @@ coverage/
 
 # Internal-only work (examples, generated renders, scratch files)
 /internal/
+examples/graphs/bundle.js

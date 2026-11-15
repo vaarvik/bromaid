@@ -446,7 +446,8 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
   function applyHighlight(): void {
     let set: HighlightSet | null = null;
     const hl = opts.highlight ?? 'neighbours';
-    if (hovered !== null && hl !== 'none') {
+    const known = hovered !== null && (hovered.kind === 'edge' || nodeViews.has(hovered.id));
+    if (hovered !== null && known && hl !== 'none') {
       set = hovered.kind === 'node'
         ? highlightForNode(current.edges, hovered.id, hl)
         : highlightForEdge(current.edges, hovered.id, hl);
