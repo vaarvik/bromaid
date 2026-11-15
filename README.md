@@ -243,7 +243,7 @@ Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 line
 
 - **Columns**: the container's width is split with a 64px gap; the first column is 1.35× each of the others. Every column is centred vertically against the tallest. A `ResizeObserver` re-lays out on width changes. Nodes keep the given order; `order: 'crossings'` reorders columns after the first to reduce crossings.
 - **General**: `layout: 'layered'` (the default when the data has `nodes` instead of `columns`) uses bromaid's ELK layout, loaded on demand so column-only pages never download it. Any DSL diagram can be mounted with `graphFromProgram(parse(source))`.
-- **Edges**: a cubic from the right-middle of the source to 6px before the left-middle of the target, control points at the horizontal midpoint, a port dot at the source. `ok` = solid 1.5px muted `--ok`; `run` = dashed 5/5 in `--run` with a moving dash (still under `prefers-reduced-motion`); `off` = dashed 3/4 grey.
+- **Edges**: a cubic from the right-middle of the source to 6px before the left-middle of the target, control points at the horizontal midpoint, a port dot at the source. `ok` = solid 1.5px muted `--ok`; `run` = dashed 5/5 in `--run` with a moving dash (it holds still under `prefers-reduced-motion`); `off` = dashed 3/4 grey.
 - **Edge labels** sit at the source end, 8px in, on the side the curve leaves clear (above a curve that goes down, below one that goes up). Labels on edges from the same node stack outward and never overlap.
 
 ### Options
