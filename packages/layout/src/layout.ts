@@ -42,7 +42,7 @@ let elkBundleInitialized = false;
 // constructor, leaving `new ELK()` to throw `_Worker is not a constructor`.
 // Stash `self` around the first construction so the inner module evaluates
 // the Node branch and caches the right exports for every later instance.
-function createElk(): InstanceType<typeof ELK> {
+export function createElk(): InstanceType<typeof ELK> {
   if (elkBundleInitialized) return new ELK();
 
   const isNode =

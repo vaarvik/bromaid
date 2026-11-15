@@ -23,6 +23,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./graph": {
+      "types": "./src/graph/index.ts",
+      "import": "./dist/graph.js",
+      "require": "./dist/graph.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -32,6 +37,11 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "require": "./dist/index.cjs"
+      },
+      "./graph": {
+        "types": "./dist/graph.d.ts",
+        "import": "./dist/graph.js",
+        "require": "./dist/graph.cjs"
       },
       "./package.json": "./package.json"
     }

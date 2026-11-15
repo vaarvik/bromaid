@@ -21,3 +21,9 @@ export type {
   PlacedNode,
   Point,
 } from './types.js';
+export * from './graph/index.js';
+export {
+  estimateNodeSize,
+  layoutLayered,
+  type LayeredLayoutOptions,
+} from './graph-layered.js';
