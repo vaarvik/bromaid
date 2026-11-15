@@ -1,5 +1,6 @@
 import { parse, type BromaidError, type BromaidErrorCode, type BromaidErrorOptions, type Program } from '@bromaid/core';
 import { layout, type LayoutGraph, type LayoutOptions } from '@bromaid/layout';
+import { renderGraphEdgesSVG, renderGraphHTML, graphCss, type GraphHTMLOptions } from '@bromaid/renderer';
 import { renderSVG, type RenderOptions } from '@bromaid/renderer';
 import {
   defaultTheme,
@@ -17,6 +18,9 @@ export {
   parse,
   layout,
   renderSVG,
+  renderGraphEdgesSVG,
+  renderGraphHTML,
+  graphCss,
   defaultTheme,
   defineTheme,
   mergeTheme,
@@ -29,6 +33,7 @@ export type {
   LayoutGraph,
   LayoutOptions,
   RenderOptions,
+  GraphHTMLOptions,
   RenderMode,
   Theme,
   ThemeOverrides,
@@ -50,3 +55,38 @@ export async function renderFromSource(
   return renderSVG(await layout(parse(source)), options);
 }
 
+
+// Graphs from plain data (column layout, cubic edges, highlight walk). Pure;
+// the interactive part lives in `bromaid/client` and `bromaid/react`.
+export {
+  columnWidths,
+  edgeEnds,
+  edgeIds,
+  edgePath,
+  edgePoint,
+  estimateNodeHeight,
+  estimateNodeSize,
+  graphFromProgram,
+  graphNodes,
+  highlightForEdge,
+  highlightForNode,
+  layoutColumns,
+  layoutLayered,
+  orderByCrossings,
+  placeEdgeLabels,
+  routeEdges,
+  type ColumnLayoutOptions,
+  type ColumnOrder,
+  type GraphColumn,
+  type GraphData,
+  type GraphEdge,
+  type GraphGroup,
+  type GraphLayout,
+  type GraphNode,
+  type GraphState,
+  type HighlightMode,
+  type HighlightSet,
+  type LayeredLayoutOptions,
+  type PlacedGraphEdge,
+  type PlacedGraphNode,
+} from '@bromaid/layout';

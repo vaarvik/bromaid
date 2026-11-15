@@ -47,4 +47,12 @@ export default [
       ],
     },
   },
+  {
+    // The interactive client and the React wrapper are browser-only entries
+    // (`@bromaid/renderer/client`, `/react`); the server entries stay DOM-free.
+    files: ['packages/*/src/client/**/*.ts', 'packages/*/src/react/**/*.ts'],
+    rules: {
+      'no-restricted-globals': 'off',
+    },
+  },
 ];

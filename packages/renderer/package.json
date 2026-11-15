@@ -1,7 +1,7 @@
 {
   "name": "@bromaid/renderer",
   "version": "0.1.2",
-  "description": "Pure-string SVG renderer for @bromaid LayoutGraph. DOM-free, RSC-safe.",
+  "description": "Pure-string SVG renderer for @bromaid LayoutGraph (DOM-free, RSC-safe), plus an opt-in interactive client (./client) and React wrapper (./react).",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,6 +23,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./client": {
+      "types": "./src/client/index.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./react": {
+      "types": "./src/react/index.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -32,6 +42,16 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "require": "./dist/index.cjs"
+      },
+      "./client": {
+        "types": "./dist/client.d.ts",
+        "import": "./dist/client.js",
+        "require": "./dist/client.cjs"
+      },
+      "./react": {
+        "types": "./dist/react.d.ts",
+        "import": "./dist/react.js",
+        "require": "./dist/react.cjs"
       },
       "./package.json": "./package.json"
     }
@@ -53,9 +73,21 @@
     "@bromaid/theme": "workspace:*"
   },
   "devDependencies": {
+    "@types/react": "18.3.28",
     "elkjs": "^0.9.3",
+    "happy-dom": "^21.0.4",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
     "tsup": "^8.3.5",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }
