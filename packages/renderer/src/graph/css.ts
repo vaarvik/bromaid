@@ -1,15 +1,15 @@
 /**
  * Stylesheet for interactive graphs (`mount()`) and for the static
  * `renderGraphHTML()` output. Every colour comes from a CSS variable:
- * the host's `--card --raised --bd2 --fg --fa --ok --run --ok-t --run-t
- * --font-mono`. The values after the commas are dark-mode defaults used only
+ * the host's `--card --raised --bd2 --fg --fa --ok --run --fail --ok-t --run-t
+ * --fail-t --font-mono`. The values after the commas are dark-mode defaults used only
  * when the host defines none of them.
  */
 export const graphCss = `
 .bm-graph{
   --bm-card:var(--card,#15181d);--bm-raised:var(--raised,#1d2128);--bm-bd2:var(--bd2,#2d333d);
-  --bm-fg:var(--fg,#e7e9ec);--bm-fa:var(--fa,#8b929d);--bm-ok:var(--ok,#41b883);--bm-run:var(--run,#5a9cff);
-  --bm-ok-t:var(--ok-t,rgba(65,184,131,.14));--bm-run-t:var(--run-t,rgba(90,156,255,.14));
+  --bm-fg:var(--fg,#e7e9ec);--bm-fa:var(--fa,#8b929d);--bm-ok:var(--ok,#41b883);--bm-run:var(--run,#5a9cff);--bm-fail:var(--fail,#f0616d);
+  --bm-ok-t:var(--ok-t,rgba(65,184,131,.14));--bm-run-t:var(--run-t,rgba(90,156,255,.14));--bm-fail-t:var(--fail-t,rgba(240,97,109,.14));
   --bm-mono:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);
   position:relative;color:var(--bm-fg);font:inherit;box-sizing:border-box;
 }
@@ -27,6 +27,8 @@ export const graphCss = `
 .bm-edge--run .bm-port{fill:var(--bm-run)}
 .bm-edge--off .bm-edge-line{stroke:color-mix(in srgb,var(--bm-fa) 60%,transparent);stroke-dasharray:3 4}
 .bm-edge--off .bm-port{fill:color-mix(in srgb,var(--bm-fa) 60%,transparent)}
+.bm-edge--fail .bm-edge-line{stroke:color-mix(in srgb,var(--bm-fail) 70%,transparent)}
+.bm-edge--fail .bm-port{fill:color-mix(in srgb,var(--bm-fail) 80%,transparent)}
 .bm-edge-label{font-family:var(--bm-mono);font-size:10px;fill:var(--bm-fa);pointer-events:none}
 @keyframes bm-dash{to{stroke-dashoffset:-20}}
 .bm-graph[data-hl] .bm-node:not(.bm-on),.bm-graph[data-hl] .bm-group:not(.bm-on){opacity:.3}
@@ -35,6 +37,8 @@ export const graphCss = `
 .bm-edge--ok.bm-on .bm-edge-line{stroke:var(--bm-ok)}
 .bm-edge--ok.bm-on .bm-port{fill:var(--bm-ok)}
 .bm-edge--off.bm-on .bm-edge-line{stroke:var(--bm-fa)}
+.bm-edge--fail.bm-on .bm-edge-line{stroke:var(--bm-fail)}
+.bm-edge--fail.bm-on .bm-port{fill:var(--bm-fail)}
 .bm-edge.bm-on .bm-edge-label{fill:var(--bm-fg)}
 .bm-group{position:absolute;left:0;top:0;border:1px dashed var(--bm-bd2);border-radius:12px;
   background:color-mix(in srgb,var(--bm-raised) 35%,transparent);transition:opacity .12s}
@@ -54,6 +58,7 @@ export const graphCss = `
 .bm-line{font-size:12px;line-height:16px;color:var(--bm-fa);overflow-wrap:anywhere}
 .bm-node--ok .bm-tile{background:var(--bm-ok-t);color:var(--bm-ok)}
 .bm-node--run .bm-tile{background:var(--bm-run-t);color:var(--bm-run)}
+.bm-node--fail .bm-tile{background:var(--bm-fail-t);color:var(--bm-fail)}
 .bm-node--app{height:40px;align-items:center;gap:8px;padding:0 10px}
 .bm-node--app .bm-tile{width:24px;height:24px;border-radius:6px}
 .bm-node--app .bm-tile svg{width:14px;height:14px}

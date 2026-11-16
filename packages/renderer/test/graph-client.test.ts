@@ -148,11 +148,21 @@ describe('mount', () => {
     expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'c2' }), expect.anything());
     node(el, 'new').click();
     expect(onAction).toHaveBeenCalledWith('new-cluster', expect.objectContaining({ id: 'new' }), expect.anything());
-    node(el, 'c1').dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
     const tip = el.querySelector('.bm-tip') as HTMLElement;
+    c2.blur();
+    // Hidden and empty: no tooltip role (axe aria-tooltip-name), hidden from AT.
+    expect(tip.hasAttribute('role')).toBe(false);
+    expect(tip.getAttribute('aria-hidden')).toBe('true');
+    node(el, 'c1').dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+    expect(tip.getAttribute('role')).toBe('tooltip');
+    expect(tip.hasAttribute('aria-hidden')).toBe(false);
     expect(tip.textContent).toBe('Main cluster');
     expect(tip.classList.contains('bm-tip--on')).toBe(true);
     expect(node(el, 'c1').getAttribute('aria-describedby')).toBe(tip.id);
+    node(el, 'c1').dispatchEvent(new PointerEvent('pointerout', { bubbles: true }));
+    expect(tip.classList.contains('bm-tip--on')).toBe(false);
+    expect(tip.hasAttribute('role')).toBe(false);
+    expect(tip.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('takes custom templates, CSS-variable themes and a grid', async () => {

@@ -6,8 +6,8 @@ import type {
   PlacedGraphNode,
 } from './types.js';
 
-/** The curve stops this far before the target's left side. */
-export const EDGE_END_GAP = 6;
+/** The curve stops this far before the target's left side (0: flush at its edge). */
+export const EDGE_END_GAP = 0;
 /** Labels start this far into the edge from the source port. */
 export const EDGE_LABEL_INSET = 8;
 /** Gap between the line and the nearest label. */
@@ -39,7 +39,7 @@ interface Box {
   readonly height: number;
 }
 
-/** From the right-middle of `source` to `endGap` before the left-middle of `target`. */
+/** From the right-middle of `source` to the left-middle of `target` (less `endGap`, default 0). */
 export function edgeEnds(source: Box, target: Box, endGap: number = EDGE_END_GAP): EdgeEnds {
   return {
     sx: source.x + source.width,

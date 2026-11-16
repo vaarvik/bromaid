@@ -16,7 +16,25 @@ describe('graph markup (server)', () => {
     expect(svg.startsWith('<svg class="bm-edges"')).toBe(true);
     expect(svg).toContain('bm-edge--run');
     expect(svg).toContain('class="bm-port"');
+    expect(svg).toContain('class="bm-port bm-port--end"');
+    expect(svg).not.toContain('NaN');
     expect(svg).toContain('>2×</text>');
+  });
+
+  it('ends edges flush at the target with a port dot there', () => {
+    const laid = layoutColumns(data, { width: 500 });
+    const e = laid.edges[0]!;
+    const target = laid.nodes.find((p) => p.node.id === 'a1')!;
+    expect(e.ends.tx).toBe(target.x);
+    expect(renderGraphEdgesSVG(laid)).toContain(`cx="${Math.round(target.x * 100) / 100}"`);
+  });
+
+  it('styles the fail edge state in --fail', () => {
+    const svg = renderGraphEdgesSVG(layoutColumns({ ...data, edges: [{ from: 'c1', to: 'a1', state: 'fail' }] }, { width: 500 }));
+    expect(svg).toContain('bm-edge--fail');
+    expect(graphCss).toContain('.bm-edge--fail .bm-edge-line{stroke:color-mix(in srgb,var(--bm-fail)');
+    expect(graphCss).toContain('.bm-edge--fail.bm-on .bm-edge-line{stroke:var(--bm-fail)}');
+    expect(graphCss).toContain('--bm-fail:var(--fail,');
   });
 
   it('renders a static HTML snapshot with escaped text', () => {

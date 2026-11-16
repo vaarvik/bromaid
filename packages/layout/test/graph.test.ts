@@ -116,9 +116,11 @@ describe('edge maths', () => {
   const s = { x: 0, y: 0, width: 100, height: 40 };
   const t = { x: 200, y: 100, width: 80, height: 40 };
 
-  it('runs from the right-middle of the source to 6px before the left-middle of the target', () => {
+  it('runs from the right-middle of the source flush to the left-middle of the target', () => {
     const e = edgeEnds(s, t);
-    expect(e).toEqual({ sx: 100, sy: 20, tx: 200 - EDGE_END_GAP, ty: 120 });
+    expect(e).toEqual({ sx: 100, sy: 20, tx: 200, ty: 120 });
+    expect(EDGE_END_GAP).toBe(0);
+    expect(edgeEnds(s, t, 6).tx).toBe(194);
   });
 
   it('puts both control points at the horizontal midpoint', () => {
@@ -126,15 +128,15 @@ describe('edge maths', () => {
     const c = edgeControls(e);
     const mid = (e.sx + e.tx) / 2;
     expect(c).toEqual({ c1x: mid, c1y: e.sy, c2x: mid, c2y: e.ty });
-    expect(edgePath(e)).toBe(`M100 20C${mid} 20 ${mid} 120 194 120`);
+    expect(edgePath(e)).toBe(`M100 20C${mid} 20 ${mid} 120 200 120`);
   });
 
   it('evaluates the cubic at its ends and centre', () => {
     const e = edgeEnds(s, t);
     expect(edgePoint(e, 0)).toEqual({ x: 100, y: 20 });
-    expect(edgePoint(e, 1)).toEqual({ x: 194, y: 120 });
+    expect(edgePoint(e, 1)).toEqual({ x: 200, y: 120 });
     const m = edgePoint(e, 0.5);
-    expect(m.x).toBeCloseTo(147);
+    expect(m.x).toBeCloseTo(150);
     expect(m.y).toBeCloseTo(70);
   });
 

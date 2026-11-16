@@ -16,7 +16,7 @@ export function edgeLabelBaseline(label: { y: number; height: number }): number 
   return label.y + label.height - 3;
 }
 
-/** One edge as an SVG `<g>`: hit area, line, port dot and optional label. */
+/** One edge as an SVG `<g>`: hit area, line, port dots at both ends and optional label. */
 export function renderGraphEdge(e: PlacedGraphEdge): string {
   const d = escapeXml(e.d);
   const label =
@@ -26,7 +26,8 @@ export function renderGraphEdge(e: PlacedGraphEdge): string {
   return (
     `<g class="${edgeClass(e)}" data-edge="${escapeXml(e.id)}">` +
     `<path class="bm-edge-hit" d="${d}"/><path class="bm-edge-line" d="${d}"/>` +
-    `<circle class="bm-port" cx="${n(e.ends.sx)}" cy="${n(e.ends.sy)}" r="${EDGE_PORT_R}"/>${label}</g>`
+    `<circle class="bm-port" cx="${n(e.ends.sx)}" cy="${n(e.ends.sy)}" r="${EDGE_PORT_R}"/>` +
+    `<circle class="bm-port bm-port--end" cx="${n(e.ends.tx)}" cy="${n(e.ends.ty)}" r="${EDGE_PORT_R}"/>${label}</g>`
   );
 }
 

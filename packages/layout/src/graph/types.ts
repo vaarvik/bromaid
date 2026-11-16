@@ -11,10 +11,10 @@ export type KnownGraphNodeKind = 'cluster' | 'app' | 'ghost';
 export type GraphNodeKind = KnownGraphNodeKind | (string & Record<never, never>);
 
 /**
- * `ok` / `run` / `off` get their own styles; any other string is passed through
+ * `ok` / `run` / `off` / `fail` get their own styles; any other string is passed through
  * as a class (`bm-node--<state>`) so hosts can style their own states.
  */
-export type GraphState = 'ok' | 'run' | 'off' | (string & Record<never, never>);
+export type GraphState = 'ok' | 'run' | 'off' | 'fail' | (string & Record<never, never>);
 
 export interface GraphNode {
   readonly id: string;
@@ -99,7 +99,7 @@ export interface EdgeEnds {
   /** Right-middle of the source. */
   readonly sx: number;
   readonly sy: number;
-  /** Where the curve ends: left-middle of the target minus the end gap. */
+  /** Where the curve ends: left-middle of the target (minus the end gap, default 0). */
   readonly tx: number;
   readonly ty: number;
 }

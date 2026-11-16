@@ -150,7 +150,8 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
   const nodesLayer = doc.createElement('div');
   const tip = doc.createElement('div');
   tip.className = 'bm-tip';
-  tip.setAttribute('role', 'tooltip');
+  // Hidden and empty until shown: no tooltip role (axe: aria-tooltip-name).
+  tip.setAttribute('aria-hidden', 'true');
   const tipId = `bm-tip-${Math.random().toString(36).slice(2, 9)}`;
   tip.id = tipId;
   stage.append(groupsLayer, svg, nodesLayer, tip);
@@ -472,9 +473,13 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
       tip.textContent = node.tip;
       tip.style.left = `${box.x + box.w / 2}px`;
       tip.style.top = `${box.y}px`;
+      tip.setAttribute('role', 'tooltip');
+      tip.removeAttribute('aria-hidden');
       tip.classList.add('bm-tip--on');
     } else {
       tip.classList.remove('bm-tip--on');
+      tip.removeAttribute('role');
+      tip.setAttribute('aria-hidden', 'true');
     }
   }
 

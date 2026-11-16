@@ -25,7 +25,7 @@ export interface ColumnLayoutOptions {
   readonly order?: ColumnOrder;
   /** Node height at a given column width. Defaults to `estimateNodeHeight`. */
   readonly heightOf?: (node: GraphNode, columnWidth: number) => number;
-  /** Space the curve leaves before the target. Default 6. */
+  /** Space the curve leaves before the target. Default 0 (flush). */
   readonly endGap?: number;
 }
 

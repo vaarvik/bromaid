@@ -235,7 +235,7 @@ A full page with the sample above, a deploying (`run`) edge, a stopped app and a
 | `nodes[]`, `groups[]` `{ id, label, group? }` | General layout instead of columns: free nodes, placed by ELK, optionally inside (nested) groups. |
 | `edges[]` `{ from, to, state?, label?, id? }` | One cubic curve each. `id` defaults to `from->to`. |
 | node `{ id, kind?, label, lines?, meta?, state?, icon?, href?, action?, tip?, group? }` | `kind` picks the template (default `app`); `lines` are muted lines (up to 3); `meta` is right-aligned mono text; `href` makes the node a link; `action` makes it a button that emits `onAction`; `tip` is a tooltip. |
-| `state` | `ok`, `run`, `off`, or any string (becomes the class `bm-node--<state>` / `bm-edge--<state>`). |
+| `state` | `ok`, `run`, `off`, `fail`, or any string (becomes the class `bm-node--<state>` / `bm-edge--<state>`). |
 
 Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 lines, text wraps), **`app`** (40px row, tile, label, mono meta), **`ghost`** (dashed outline, centred icon + label, a button). Any other kind uses the cluster-style card. State `off` on any node: dashed border, no fill, muted label. Built-in icons: `cluster`, `app`, `plus`, `db`, `globe`, `user`, `box`; any other `icon` shows its first letter.
 
@@ -243,7 +243,7 @@ Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 line
 
 - **Columns**: the container's width is split with a 64px gap; the first column is 1.35× each of the others. Every column is centred vertically against the tallest. A `ResizeObserver` re-lays out on width changes. Nodes keep the given order; `order: 'crossings'` reorders columns after the first to reduce crossings.
 - **General**: `layout: 'layered'` (the default when the data has `nodes` instead of `columns`) uses bromaid's ELK layout, loaded on demand so column-only pages never download it. Any DSL diagram can be mounted with `graphFromProgram(parse(source))`.
-- **Edges**: a cubic from the right-middle of the source to 6px before the left-middle of the target, control points at the horizontal midpoint, a port dot at the source. `ok` = solid 1.5px muted `--ok`; `run` = dashed 5/5 in `--run` with a moving dash (it holds still under `prefers-reduced-motion`); `off` = dashed 3/4 grey.
+- **Edges**: a cubic from the right-middle of the source flush to the left-middle of the target, control points at the horizontal midpoint, a port dot at each end. `ok` = solid 1.5px muted `--ok`; `run` = dashed 5/5 in `--run` with a moving dash (it holds still under `prefers-reduced-motion`); `off` = dashed 3/4 grey; `fail` = solid 1.5px in `--fail` (red), full `--fail` when highlighted.
 - **Edge labels** sit at the source end, 8px in, on the side the curve leaves clear (above a curve that goes down, below one that goes up). Labels on edges from the same node stack outward and never overlap.
 
 ### Options
@@ -264,7 +264,7 @@ Interaction: hovering or focusing a node highlights it (edges go to full colour 
 
 ### Theming
 
-Only CSS variables, read from the host page: `--card --raised --bd2 --fg --fa --ok --run --ok-t --run-t --font-mono`. Dark-mode values are the defaults when a variable is missing; define the variables (or pass `theme`) for light mode.
+Only CSS variables, read from the host page: `--card --raised --bd2 --fg --fa --ok --run --fail --ok-t --run-t --fail-t --font-mono`. Dark-mode values are the defaults when a variable is missing; define the variables (or pass `theme`) for light mode.
 
 ### Server vs client
 
