@@ -23,6 +23,8 @@ export type {
 } from './types.js';
 export * from './graph/index.js';
 export {
+  GROUP_PAD_SIDE,
+  GROUP_PAD_TOP,
   estimateNodeSize,
   layoutLayered,
   type LayeredLayoutOptions,

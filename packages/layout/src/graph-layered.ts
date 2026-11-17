@@ -3,6 +3,7 @@ import { createElk } from './layout.js';
 import { routeEdges } from './graph/edges.js';
 import { estimateNodeHeight } from './graph/columns.js';
 import { graphNodes } from './graph/program.js';
+import { alignStacks } from './graph/align.js';
 import type {
   GraphData,
   GraphLayout,
@@ -19,13 +20,19 @@ export interface LayeredLayoutOptions {
   readonly layerGap?: number;
   /** Gap between nodes in a layer. Default 16. */
   readonly nodeGap?: number;
-  /** Space the curve leaves before the target. Default 6. */
+  /** Space the curve leaves before the target. Default 0 (flush). */
   readonly endGap?: number;
+  /** How nodes stacked in a group line up when the group sets no `align`. Default `"start"`. */
+  readonly align?: 'start' | 'center';
   /** Override ELK options. */
   readonly elkOptions?: Readonly<Record<string, string>>;
 }
 
-const GROUP_PAD = '[top=34,left=16,bottom=16,right=16]';
+/** Inner padding of a group frame: the sides, and the top that also holds the label. */
+export const GROUP_PAD_SIDE = 16;
+/** Label (9px from the top, ~13px tall) + the same 16px gap as the sides. */
+export const GROUP_PAD_TOP = 38;
+const GROUP_PAD = `[top=${GROUP_PAD_TOP},left=${GROUP_PAD_SIDE},bottom=${GROUP_PAD_SIDE},right=${GROUP_PAD_SIDE}]`;
 
 export function estimateNodeSize(node: GraphNode): Size {
   const kind = node.kind ?? 'app';
@@ -59,7 +66,7 @@ export async function layoutLayered(
       layoutOptions: {
         'elk.padding': GROUP_PAD,
         'elk.nodeSize.constraints': 'MINIMUM_SIZE',
-        'elk.nodeSize.minimum': `(${Math.ceil(g.label.length * 7 + 40)},60)`,
+        'elk.nodeSize.minimum': `(${Math.ceil(g.label.length * 7 + GROUP_PAD_SIDE * 2 + 8)},60)`,
       },
     });
   }
@@ -125,11 +132,16 @@ export async function layoutLayered(
   walk(laid, 0, 0, 0);
   placedGroups.sort((a, b) => a.depth - b.depth);
 
+  const aligned = alignStacks(placedNodes, placedGroups, {
+    ...(opts.align !== undefined ? { align: opts.align } : {}),
+    padRight: GROUP_PAD_SIDE,
+  });
+
   return {
     width: laid.width ?? 0,
     height: laid.height ?? 0,
-    nodes: placedNodes,
+    nodes: aligned,
     groups: placedGroups,
-    edges: routeEdges(placedNodes, data.edges, opts.endGap),
+    edges: routeEdges(aligned, data.edges, opts.endGap),
   };
 }

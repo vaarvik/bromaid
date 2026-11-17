@@ -29,23 +29,37 @@ export interface ColumnLayoutOptions {
   readonly endGap?: number;
 }
 
+/** Padding inside every built-in node, all four sides (text box to border), in px. */
+export const NODE_PAD = 8;
+/** Line heights of the built-in templates: the label and each muted line. */
+export const NODE_LABEL_LINE = 18;
+export const NODE_LINE = 16;
+/** A one-line app node (24px tile + padding). */
+export const APP_NODE_HEIGHT = 40;
+
 /**
  * Rough height of a built-in template at a given width, for server-side
  * layout. In the browser `mount()` measures the real HTML instead.
+ * Every node keeps at least `NODE_PAD` between its text and its border on
+ * all sides and grows with its lines.
  */
 export function estimateNodeHeight(node: GraphNode, columnWidth: number): number {
   const kind = node.kind ?? 'app';
-  if (kind === 'app') return 40;
+  const lines = (node.lines ?? []).slice(0, 3);
+  if (kind === 'app') {
+    if (lines.length === 0) return APP_NODE_HEIGHT;
+    return NODE_PAD * 2 + NODE_LABEL_LINE + lines.length * NODE_LINE;
+  }
   if (kind === 'ghost') return 44;
   // cluster (and unknown kinds): 12px padding, 36px icon tile, wrapped text.
   const textWidth = Math.max(columnWidth - 24 - 36 - 10, 40);
   const perLine = Math.max(Math.floor(textWidth / 7), 1);
   const labelLines = Math.max(1, Math.ceil(node.label.length / perLine));
-  const extra = (node.lines ?? []).slice(0, 3).reduce(
+  const extra = lines.reduce(
     (n, l) => n + Math.max(1, Math.ceil(l.length / Math.floor(perLine * 1.1))),
     0,
   );
-  const text = labelLines * 18 + extra * 16;
+  const text = labelLines * NODE_LABEL_LINE + extra * NODE_LINE;
   return Math.max(text, 36) + 24;
 }
 

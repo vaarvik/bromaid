@@ -49,6 +49,12 @@ export interface GraphGroup {
   readonly label: string;
   /** Id of the enclosing group, for nesting. */
   readonly group?: string;
+  /**
+   * Nodes stacked in this group (one vertical list): `start` (default) lines
+   * them up on the left with one shared width, `center` keeps each centred at
+   * its own width.
+   */
+  readonly align?: 'start' | 'center';
 }
 
 export interface GraphEdge {
