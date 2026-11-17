@@ -18,6 +18,22 @@ import {
   type HighlightSet,
   type PlacedGraphEdge,
   type PlacedGraphEdgeLabel,
+  IDENTITY,
+  ZOOM_DBLCLICK,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  ZOOM_STEP,
+  centreAt,
+  fitViewport,
+  keyAction,
+  panBy,
+  pinchStep,
+  revealBox,
+  viewportTransform,
+  wheelAction,
+  zoomAt,
+  type KeyAction,
+  type Viewport,
 } from '@bromaid/layout/graph';
 import { graphCss } from '../graph/css.js';
 import { edgeClass, edgeLabelBaseline, renderGraphEdge } from '../graph/markup.js';
@@ -70,6 +86,31 @@ export interface MountOptions {
   readonly onEdgeClick?: (edge: GraphEdge, event: Event) => void;
   /** Called after every layout with the result (positions, size). */
   readonly onLayout?: (layout: GraphLayout) => void;
+  /**
+   * Layered layout: how nodes stacked in a group line up when the group has
+   * no `align` of its own. `start` (default): left, one shared width.
+   */
+  readonly align?: 'start' | 'center';
+  /**
+   * A pan-and-zoom canvas (for a full-screen view; leave off where the page
+   * should scroll). The graph fills `el` (give it a height), a plain wheel or
+   * two-finger scroll pans, pinch or ctrl/⌘ + wheel zooms at the pointer,
+   * dragging the empty canvas (or anything while Space is held, or with the
+   * middle button) pans, `+` / `-` / `0` zoom in, out and fit, a double-click
+   * on the canvas zooms in (shift: out). Nodes stay focusable and clickable;
+   * a focused node is panned into view. Default false.
+   */
+  readonly panZoom?: boolean;
+  /**
+   * Pan and zoom: the view on open and on `fit()`. `both` (default): the whole
+   * graph, centred both ways, never enlarged past 100%. `none`: 100%, centred.
+   * `padding` is the space kept around it (default 24).
+   */
+  readonly fit?: 'both' | 'none';
+  /** Pan and zoom: the zoom out / zoom in / fit buttons (bottom right). Default true. */
+  readonly controls?: boolean;
+  /** Pan and zoom: called whenever the view moves or zooms. */
+  readonly onViewport?: (viewport: Viewport) => void;
 }
 
 export interface MountedGraph {
@@ -81,6 +122,14 @@ export interface MountedGraph {
   readonly ready: Promise<void>;
   /** The latest layout. */
   layout(): GraphLayout | null;
+  /** Pan and zoom: zoom in one step at the view's centre. */
+  zoomIn(): void;
+  /** Pan and zoom: zoom out one step at the view's centre. */
+  zoomOut(): void;
+  /** Pan and zoom: show the whole graph, centred both ways (the `fit` option). */
+  fit(): void;
+  /** The current pan and zoom (identity when `panZoom` is off). */
+  viewport(): Viewport;
   destroy(): void;
 }
 
@@ -95,6 +144,7 @@ interface EdgeView {
   line: SVGPathElement;
   hit: SVGPathElement;
   port: SVGCircleElement;
+  portEnd: SVGCircleElement | null;
   label: SVGTextElement | null;
 }
 
@@ -140,6 +190,12 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
   let destroyed = false;
   let hovered: { kind: 'node' | 'edge'; id: string } | null = null;
   let lastWidth = -1;
+  let lastHeight = -1;
+  // Pan and zoom.
+  let panOn = false;
+  let vp: Viewport = IDENTITY;
+  /** The person moved or zoomed: a relayout or resize keeps their view instead of refitting. */
+  let moved = false;
 
   const root = doc.createElement('div');
   const stage = doc.createElement('div');
@@ -157,6 +213,7 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
   stage.append(groupsLayer, svg, nodesLayer, tip);
   root.appendChild(stage);
   el.appendChild(root);
+  let controls: HTMLElement | null = null;
 
   const nodeViews = new Map<string, NodeView>();
   const edgeViews = new Map<string, EdgeView>();
@@ -216,6 +273,17 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
 
   // ---- layout ----------------------------------------------------------------
 
+  /**
+   * A node's size in graph px, rounded up: `offsetWidth` rounds to the nearest
+   * pixel, and a box a fraction too narrow cuts its text with "…".
+   */
+  function measure(e: HTMLElement): { width: number; height: number } {
+    const r = e.getBoundingClientRect();
+    const k = panOn ? vp.k : 1;
+    const up = (v: number): number => (v > 0 ? Math.ceil(v / k - 0.01) : 0);
+    return { width: Math.max(e.offsetWidth, up(r.width)), height: Math.max(e.offsetHeight, up(r.height)) };
+  }
+
   async function computeLayout(): Promise<GraphLayout> {
     const pad = opts.padding ?? 0;
     const nodes = graphNodes(current);
@@ -227,12 +295,16 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
         nodeBoxes.delete(id);
       }
     }
-    root.className = `bm-graph bm-graph--${mode()}${opts.grid === true ? ' bm-graph--grid' : ''}`;
-    root.style.padding = `${pad}px`;
+    root.className = `bm-graph bm-graph--${mode()}${opts.grid === true ? ' bm-graph--grid' : ''}${panOn ? ' bm-graph--pan' : ''}`;
+    if (spaceHeld) root.classList.add('bm-graph--grab');
+    if (drag !== null) root.classList.add('bm-graph--grabbing');
+    // Pan and zoom: the padding is the space a fit keeps free, not a frame.
+    root.style.padding = panOn ? '0' : `${pad}px`;
     if (mode() === 'columns') {
       const cols = current.columns ?? [];
       const width = Math.max(el.clientWidth - pad * 2, 0);
       lastWidth = el.clientWidth;
+      lastHeight = el.clientHeight;
       const widths = columnWidths(cols.length, width, opts.gap ?? COLUMN_GAP, opts.weights);
       // Write every width first, then read every height (one reflow).
       cols.forEach((c, ci) => c.nodes.forEach((node) => {
@@ -242,7 +314,7 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
         if (v !== undefined) v.el.style.width = `${w}px`;
       }));
       const heights = new Map<string, number>();
-      for (const [id, v] of nodeViews) heights.set(id, v.el.offsetHeight);
+      for (const [id, v] of nodeViews) heights.set(id, measure(v.el).height);
       return layoutColumns(current, {
         width,
         ...(opts.gap !== undefined ? { gap: opts.gap } : {}),
@@ -261,10 +333,11 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
       if (v !== undefined) v.el.style.width = '';
     }
     const sizes = new Map<string, { width: number; height: number }>();
-    for (const [id, v] of nodeViews) sizes.set(id, { width: v.el.offsetWidth, height: v.el.offsetHeight });
+    for (const [id, v] of nodeViews) sizes.set(id, measure(v.el));
     // ELK is only loaded when a general layout is asked for.
     const { layoutLayered, estimateNodeSize } = await import('@bromaid/layout');
     return layoutLayered(current, {
+      ...(opts.align !== undefined ? { align: opts.align } : {}),
       sizeOf: (node) => {
         const s = sizes.get(node.id);
         return s !== undefined && s.width > 0 && s.height > 0 ? s : estimateNodeSize(node);
@@ -296,6 +369,7 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
           hit: g.querySelector('.bm-edge-hit') as SVGPathElement,
           line: g.querySelector('.bm-edge-line') as SVGPathElement,
           port: g.querySelector('.bm-port') as SVGCircleElement,
+          portEnd: g.querySelector('.bm-port--end'),
           label: g.querySelector('.bm-edge-label'),
         };
         edgeViews.set(e.id, v);
@@ -379,6 +453,9 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
       v.hit.setAttribute('d', d);
       v.port.setAttribute('cx', String(ends.sx));
       v.port.setAttribute('cy', String(ends.sy));
+      // Both dots sit on the path's first and last point, also mid-animation.
+      v.portEnd?.setAttribute('cx', String(ends.tx));
+      v.portEnd?.setAttribute('cy', String(ends.ty));
       edgeEnds.set(e.id, ends);
       if (v.label !== null && e.label !== null) {
         const la = from.labels.get(e.id);
@@ -425,6 +502,10 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
       raf = win.requestAnimationFrame(frame);
     }
     applyHighlight();
+    if (panOn) {
+      if (!moved) fitView();
+      else applyViewport();
+    }
     opts.onLayout?.(next);
   }
 
@@ -437,10 +518,310 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
     for (const [k, v] of Object.entries(opts.theme ?? {})) {
       root.style.setProperty(k.startsWith('--') ? k : `--${k}`, v);
     }
+    syncPanZoom();
     const next = await computeLayout();
     if (mine !== token || destroyed) return;
     place(next);
   }
+
+  // ---- pan and zoom ------------------------------------------------------------
+
+  function viewSize(): { width: number; height: number } {
+    return { width: root.clientWidth, height: root.clientHeight };
+  }
+
+  function applyViewport(): void {
+    if (!panOn) return;
+    stage.style.transform = viewportTransform(vp);
+    if (opts.grid === true) {
+      const size = 16 * vp.k;
+      root.style.backgroundSize = `${size}px ${size}px`;
+      root.style.backgroundPosition = `${vp.x}px ${vp.y}px`;
+    }
+    if (controls !== null) {
+      const zin = controls.querySelector<HTMLButtonElement>('[data-zoom="in"]');
+      const zout = controls.querySelector<HTMLButtonElement>('[data-zoom="out"]');
+      if (zin !== null) zin.disabled = vp.k >= ZOOM_MAX - 1e-9;
+      if (zout !== null) zout.disabled = vp.k <= ZOOM_MIN + 1e-9;
+    }
+    opts.onViewport?.(vp);
+  }
+
+  function setView(next: Viewport): void {
+    vp = next;
+    moved = true;
+    applyViewport();
+  }
+
+  function fitView(): void {
+    if (!panOn || laid === null) return;
+    const pad = opts.padding ?? 24;
+    let view = viewSize();
+    if (view.height === 0) {
+      // The host gave the canvas no height: show the graph at its own.
+      root.style.height = `${laid.height + pad * 2}px`;
+      view = { width: view.width, height: root.clientHeight || laid.height + pad * 2 };
+    }
+    const content = { width: laid.width, height: laid.height };
+    vp = opts.fit === 'none' ? centreAt(content, view, 1) : fitViewport(content, view, { padding: pad });
+    moved = false;
+    applyViewport();
+  }
+
+  function act(a: KeyAction): void {
+    if (a === 'fit') {
+      fitView();
+      return;
+    }
+    const view = viewSize();
+    setView(zoomAt(vp, a === 'in' ? ZOOM_STEP : 1 / ZOOM_STEP, view.width / 2, view.height / 2));
+  }
+
+  const ZOOM_BUTTONS = [
+    { id: 'out', name: 'Zoom out', key: '−', icon: '<path d="M5 12h14"/>' },
+    { id: 'in', name: 'Zoom in', key: '+', icon: '<path d="M12 5v14M5 12h14"/>' },
+    { id: 'fit', name: 'Fit to screen', key: '0', icon: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>' },
+  ] as const;
+
+  function makeControls(): HTMLElement {
+    const bar = doc.createElement('div');
+    bar.className = 'bm-zoom';
+    bar.setAttribute('role', 'group');
+    bar.setAttribute('aria-label', 'Zoom');
+    for (const z of ZOOM_BUTTONS) {
+      const b = doc.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-zoom', z.id);
+      b.setAttribute('aria-label', z.name);
+      b.setAttribute('aria-keyshortcuts', z.id === 'out' ? '-' : z.key);
+      b.title = `${z.name} (${z.key})`;
+      b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${z.icon}</svg>`;
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        act(z.id);
+      });
+      bar.appendChild(b);
+    }
+    return bar;
+  }
+
+  function point(ev: { clientX: number; clientY: number }): { x: number; y: number } {
+    const r = root.getBoundingClientRect();
+    return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  }
+
+  const isEditable = (t: EventTarget | null): boolean => {
+    const e = t as HTMLElement | null;
+    if (e === null || typeof e.tagName !== 'string') return false;
+    return /^(INPUT|TEXTAREA|SELECT)$/.test(e.tagName) || e.isContentEditable === true;
+  };
+  const inControls = (t: EventTarget | null): boolean => {
+    const e = t as Element | null;
+    return e !== null && typeof e.closest === 'function' && e.closest('.bm-zoom') !== null;
+  };
+
+  let pointerInside = false;
+  let spaceHeld = false;
+  let drag: { id: number; x: number; y: number; dist: number } | null = null;
+  const touches = new Map<number, { x: number; y: number }>();
+  let swallowClick = false;
+  let gestureK = 1;
+
+  const onWheel = (ev: Event): void => {
+    const w = ev as WheelEvent;
+    w.preventDefault();
+    const a = wheelAction(w, root.clientHeight);
+    if (a.kind === 'pan') setView(panBy(vp, a.dx, a.dy));
+    else {
+      const p = point(w);
+      setView(zoomAt(vp, a.factor, p.x, p.y));
+    }
+  };
+  let lastPointerDown = -Infinity;
+  const onDownCapture = (): void => {
+    swallowClick = false;
+    lastPointerDown = Date.now();
+  };
+  const onDown = (ev: Event): void => {
+    const p = ev as PointerEvent;
+    if (inControls(p.target)) return;
+    if (p.pointerType === 'touch') {
+      touches.set(p.pointerId, point(p));
+      if (touches.size >= 2) {
+        drag = null;
+        return;
+      }
+    }
+    const onThing = targetOf(p.target) !== null;
+    const wants = p.button === 1 || (p.button === 0 && (spaceHeld || !onThing));
+    if (!wants) return;
+    if (p.button === 1 || spaceHeld) p.preventDefault();
+    drag = { id: p.pointerId, x: p.clientX, y: p.clientY, dist: 0 };
+    try {
+      root.setPointerCapture(p.pointerId);
+    } catch {
+      // not an active pointer (synthetic events): panning still follows the moves over the canvas
+    }
+    root.classList.add('bm-graph--grabbing');
+  };
+  const onMove = (ev: Event): void => {
+    const p = ev as PointerEvent;
+    if (p.pointerType === 'touch' && touches.has(p.pointerId) && touches.size >= 2) {
+      const before = [...touches.values()];
+      touches.set(p.pointerId, point(p));
+      const after = [...touches.values()];
+      const [a0, b0] = before;
+      const [a1, b1] = after;
+      if (a0 !== undefined && b0 !== undefined && a1 !== undefined && b1 !== undefined) {
+        setView(pinchStep(vp, [a0, b0], [a1, b1]));
+        swallowClick = true;
+      }
+      return;
+    }
+    if (p.pointerType === 'touch' && touches.has(p.pointerId)) touches.set(p.pointerId, point(p));
+    if (drag === null || drag.id !== p.pointerId) return;
+    const dx = p.clientX - drag.x;
+    const dy = p.clientY - drag.y;
+    drag.x = p.clientX;
+    drag.y = p.clientY;
+    drag.dist += Math.abs(dx) + Math.abs(dy);
+    setView(panBy(vp, dx, dy));
+  };
+  const onUp = (ev: Event): void => {
+    const p = ev as PointerEvent;
+    touches.delete(p.pointerId);
+    if (drag === null || drag.id !== p.pointerId) return;
+    if (drag.dist > 3) swallowClick = true;
+    drag = null;
+    try {
+      if (root.hasPointerCapture(p.pointerId)) root.releasePointerCapture(p.pointerId);
+    } catch {
+      // already released
+    }
+    root.classList.remove('bm-graph--grabbing');
+  };
+  // A drag that started on a node (Space held) doesn't also click it.
+  const onClickCapture = (ev: Event): void => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    ev.preventDefault();
+    ev.stopPropagation();
+  };
+  const onDblClick = (ev: Event): void => {
+    const m = ev as MouseEvent;
+    if (inControls(m.target) || targetOf(m.target) !== null) return;
+    m.preventDefault();
+    const p = point(m);
+    setView(zoomAt(vp, m.shiftKey ? 1 / ZOOM_DBLCLICK : ZOOM_DBLCLICK, p.x, p.y));
+  };
+  const onEnter = (): void => {
+    pointerInside = true;
+  };
+  const onLeave = (): void => {
+    pointerInside = false;
+  };
+  const releaseSpace = (): void => {
+    spaceHeld = false;
+    root.classList.remove('bm-graph--grab');
+  };
+  const onDocKeyDown = (ev: Event): void => {
+    const k = ev as KeyboardEvent;
+    if (isEditable(k.target)) return;
+    const active = doc.activeElement;
+    const focusedIn = active !== null && root.contains(active);
+    if (!focusedIn && !(pointerInside && !isEditable(active))) return;
+    if (k.key === ' ') {
+      // Keyboard only (pointer elsewhere): Space keeps activating the focused node.
+      if (!pointerInside) return;
+      k.preventDefault();
+      k.stopPropagation();
+      if (!spaceHeld) {
+        spaceHeld = true;
+        root.classList.add('bm-graph--grab');
+      }
+      return;
+    }
+    const a = keyAction(k);
+    if (a === null) return;
+    k.preventDefault();
+    act(a);
+  };
+  const onDocKeyUp = (ev: Event): void => {
+    if ((ev as KeyboardEvent).key === ' ' && spaceHeld) releaseSpace();
+  };
+  const onGestureStart = (ev: Event): void => {
+    ev.preventDefault();
+    gestureK = vp.k;
+  };
+  const onGestureChange = (ev: Event): void => {
+    ev.preventDefault();
+    const g = ev as unknown as { scale: number; clientX: number; clientY: number };
+    const p = point(g);
+    setView(zoomAt(vp, (gestureK * g.scale) / vp.k, p.x, p.y));
+  };
+  // Keyboard focus on a node off screen pans it into view.
+  const onFocusReveal = (ev: Event): void => {
+    if (Date.now() - lastPointerDown < 600) return; // a click, not the keyboard
+    const t = targetOf(ev.target);
+    if (t === null || t.kind !== 'node') return;
+    const b = nodeBoxes.get(t.id);
+    if (b === undefined) return;
+    const next = revealBox(vp, { x: b.x, y: b.y, width: b.w, height: b.h }, viewSize());
+    if (next !== vp) setView(next);
+  };
+
+  const panListeners: ReadonlyArray<readonly [EventTarget, string, (ev: Event) => void, AddEventListenerOptions | boolean]> = [
+    [root, 'wheel', onWheel, { passive: false }],
+    [root, 'pointerdown', onDownCapture, true],
+    [root, 'pointerdown', onDown, false],
+    [root, 'pointermove', onMove, false],
+    [root, 'pointerup', onUp, false],
+    [root, 'pointercancel', onUp, false],
+    [root, 'click', onClickCapture, true],
+    [root, 'dblclick', onDblClick, false],
+    [root, 'pointerenter', onEnter, false],
+    [root, 'pointerleave', onLeave, false],
+    [root, 'gesturestart', onGestureStart, { passive: false }],
+    [root, 'gesturechange', onGestureChange, { passive: false }],
+    [root, 'focusin', onFocusReveal, false],
+    [doc, 'keydown', onDocKeyDown, true],
+    [doc, 'keyup', onDocKeyUp, true],
+  ];
+
+  function syncPanZoom(): void {
+    const want = opts.panZoom === true;
+    const wantControls = want && opts.controls !== false;
+    if (wantControls && controls === null) {
+      controls = makeControls();
+      root.appendChild(controls);
+    } else if (!wantControls && controls !== null) {
+      controls.remove();
+      controls = null;
+    }
+    if (want === panOn) return;
+    panOn = want;
+    vp = IDENTITY;
+    moved = false;
+    if (want) {
+      for (const [t, type, fn, o] of panListeners) t.addEventListener(type, fn, o);
+      win?.addEventListener('blur', releaseSpace);
+      root.tabIndex = 0;
+      root.classList.add('bm-graph--pan');
+    } else {
+      for (const [t, type, fn, o] of panListeners) t.removeEventListener(type, fn, o);
+      win?.removeEventListener('blur', releaseSpace);
+      root.removeAttribute('tabindex');
+      root.classList.remove('bm-graph--pan', 'bm-graph--grabbing');
+      releaseSpace();
+      drag = null;
+      touches.clear();
+      stage.style.transform = '';
+      root.style.height = '';
+      root.style.backgroundSize = '';
+      root.style.backgroundPosition = '';
+    }
+  }
+
 
   // ---- highlight + tooltip -----------------------------------------------------
 
@@ -553,15 +934,43 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
   let resizeQueued = false;
   if (win !== null && typeof win.ResizeObserver === 'function') {
     ro = new win.ResizeObserver(() => {
-      if (resizeQueued || mode() !== 'columns' || el.clientWidth === lastWidth) return;
+      if (resizeQueued) return;
+      const relayout = mode() === 'columns' && el.clientWidth !== lastWidth;
+      const refit = panOn && (el.clientWidth !== lastWidth || el.clientHeight !== lastHeight);
+      if (!relayout && !refit) return;
       resizeQueued = true;
       win.requestAnimationFrame(() => {
         resizeQueued = false;
-        if (!destroyed && el.clientWidth !== lastWidth) void render();
+        if (destroyed) return;
+        if (mode() === 'columns' && el.clientWidth !== lastWidth) void render();
+        else if (panOn) {
+          lastWidth = el.clientWidth;
+          lastHeight = el.clientHeight;
+          // A view the person hasn't moved stays fitted to the new size.
+          if (!moved) fitView();
+        }
       });
     });
     ro.observe(el);
   }
+
+  // Web fonts that arrive after the first layout change the nodes' sizes:
+  // measure again and lay out again only when a size moved.
+  const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts;
+  const onFonts = (): void => {
+    if (destroyed || laid === null) return;
+    for (const p of laid.nodes) {
+      const v = nodeViews.get(p.node.id);
+      if (v === undefined) continue;
+      const m = measure(v.el);
+      const wider = mode() === 'layered' && m.width > p.width + 0.5;
+      if (wider || (m.height > 0 && Math.abs(m.height - p.height) > 0.5)) {
+        void render();
+        return;
+      }
+    }
+  };
+  fonts?.addEventListener?.('loadingdone', onFonts);
 
   let ready = render();
 
@@ -581,9 +990,26 @@ export function mount(el: HTMLElement, data: GraphData, options: MountOptions = 
     layout() {
       return laid;
     },
+    zoomIn() {
+      if (panOn) act('in');
+    },
+    zoomOut() {
+      if (panOn) act('out');
+    },
+    fit() {
+      fitView();
+    },
+    viewport() {
+      return vp;
+    },
     destroy() {
       destroyed = true;
       token++;
+      fonts?.removeEventListener?.('loadingdone', onFonts);
+      if (panOn) {
+        opts = { ...opts, panZoom: false };
+        syncPanZoom();
+      }
       if (win !== null) win.cancelAnimationFrame(raf);
       ro?.disconnect();
       root.removeEventListener('pointerover', onOver);

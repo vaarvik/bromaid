@@ -1,15 +1,17 @@
 /// <reference lib="dom" />
 import { createElement, useEffect, useRef, type CSSProperties, type ReactElement } from 'react';
-import type { GraphData, GraphEdge, GraphNode, GraphLayout } from '@bromaid/layout/graph';
+import type { GraphData, GraphEdge, GraphNode, GraphLayout, Viewport } from '@bromaid/layout/graph';
 import { mount, type MountOptions, type MountedGraph } from '@bromaid/renderer/client';
 
 export interface BromaidProps extends MountOptions {
   readonly data: GraphData;
+  /** Receives the mounted graph (`zoomIn()`, `zoomOut()`, `fit()`, `highlight()`…), `null` after unmount. */
+  readonly graphRef?: { current: MountedGraph | null };
   readonly className?: string;
   readonly style?: CSSProperties;
 }
 
-const CALLBACKS = ['onNodeClick', 'onAction', 'onEdgeClick', 'onLayout'] as const;
+const CALLBACKS = ['onNodeClick', 'onAction', 'onEdgeClick', 'onLayout', 'onViewport', 'graphRef'] as const;
 
 /**
  * Thin React wrapper around `mount()`: mounts once, calls `update()` when
@@ -37,6 +39,7 @@ export function Bromaid(props: BromaidProps): ReactElement {
         ? { onEdgeClick: (x: GraphEdge, e: Event) => latest.current.onEdgeClick?.(x, e) }
         : {}),
       ...(p.onLayout !== undefined ? { onLayout: (l: GraphLayout) => latest.current.onLayout?.(l) } : {}),
+      ...(p.onViewport !== undefined ? { onViewport: (v: Viewport) => latest.current.onViewport?.(v) } : {}),
     };
   };
   const key = JSON.stringify(plain, (k, v: unknown) =>
@@ -48,9 +51,12 @@ export function Bromaid(props: BromaidProps): ReactElement {
     const el = ref.current;
     if (el === null) return undefined;
     graph.current = mount(el, latest.current.data, options());
+    const handle = latest.current.graphRef;
+    if (handle !== undefined) handle.current = graph.current;
     return () => {
       graph.current?.destroy();
       graph.current = null;
+      if (handle !== undefined) handle.current = null;
     };
     // Mount once; later changes go through update().
   }, []);
@@ -68,7 +74,7 @@ export function Bromaid(props: BromaidProps): ReactElement {
 }
 
 function stripCallbacks(p: BromaidProps): MountOptions {
-  const { data: _d, className: _c, style: _s, onNodeClick: _1, onAction: _2, onEdgeClick: _3, onLayout: _4, ...rest } = p;
+  const { data: _d, className: _c, style: _s, graphRef: _r, onNodeClick: _1, onAction: _2, onEdgeClick: _3, onLayout: _4, onViewport: _5, ...rest } = p;
   return rest;
 }
 

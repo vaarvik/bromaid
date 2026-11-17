@@ -59,7 +59,9 @@ export const graphCss = `
 .bm-node--ok .bm-tile{background:var(--bm-ok-t);color:var(--bm-ok)}
 .bm-node--run .bm-tile{background:var(--bm-run-t);color:var(--bm-run)}
 .bm-node--fail .bm-tile{background:var(--bm-fail-t);color:var(--bm-fail)}
-.bm-node--app{height:40px;align-items:center;gap:8px;padding:0 10px}
+.bm-node--app{min-height:40px;align-items:center;gap:8px;padding:8px 10px}
+.bm-node--app .bm-text{min-width:0}
+.bm-node--app .bm-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bm-node--app .bm-tile{width:24px;height:24px;border-radius:6px}
 .bm-node--app .bm-tile svg{width:14px;height:14px}
 .bm-node--app .bm-label{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
@@ -71,6 +73,18 @@ export const graphCss = `
 .bm-node--off{border-style:dashed;background:transparent}
 .bm-node--off .bm-label{color:var(--bm-fa)}
 .bm-node--off .bm-tile{background:transparent;border:1px dashed var(--bm-bd2);color:var(--bm-fa)}
+.bm-graph--pan{overflow:hidden;width:100%;height:100%;touch-action:none;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
+.bm-graph--pan:focus-visible{box-shadow:inset 0 0 0 2px var(--bm-ok)}
+.bm-graph--pan .bm-stage{position:absolute;left:0;top:0;margin:0;transform-origin:0 0}
+.bm-graph--pan .bm-node:not([href]):not(.bm-node--click):not(button){cursor:default}
+.bm-graph--grab,.bm-graph--grab *{cursor:grab!important}
+.bm-graph--grabbing,.bm-graph--grabbing *{cursor:grabbing!important}
+.bm-zoom{position:absolute;right:12px;bottom:12px;z-index:3;display:flex;gap:2px;padding:2px;border:1px solid var(--bm-bd2);border-radius:8px;background:var(--bm-card);cursor:default}
+.bm-zoom button{display:grid;place-items:center;width:28px;height:28px;margin:0;padding:0;border:0;border-radius:6px;background:transparent;color:var(--bm-fa);font:inherit;cursor:pointer}
+.bm-zoom button:hover{background:var(--bm-raised);color:var(--bm-fg)}
+.bm-zoom button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bm-ok)}
+.bm-zoom button:disabled{opacity:.4;cursor:default;background:transparent}
+.bm-zoom svg{width:16px;height:16px}
 .bm-tip{position:absolute;left:0;top:0;z-index:2;max-width:260px;padding:6px 8px;border-radius:6px;background:var(--bm-raised);
   border:1px solid var(--bm-bd2);color:var(--bm-fg);font-size:12px;line-height:16px;pointer-events:none;opacity:0;
   transform:translate(-50%,calc(-100% - 8px));transition:opacity .1s}

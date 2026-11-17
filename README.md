@@ -232,18 +232,19 @@ A full page with the sample above, a deploying (`run`) edge, a stopped app and a
 | Field | Meaning |
 | --- | --- |
 | `columns[]` `{ id, nodes[] }` | Column layout: each column is a fixed rank, nodes stay in the written order. |
-| `nodes[]`, `groups[]` `{ id, label, group? }` | General layout instead of columns: free nodes, placed by ELK, optionally inside (nested) groups. |
+| `nodes[]`, `groups[]` `{ id, label, group?, align? }` | General layout instead of columns: free nodes, placed by ELK, optionally inside (nested) groups. Nodes stacked in a group line up on the left with one shared width (`align: 'start'`, the default) or stay centred at their own width (`'center'`). |
 | `edges[]` `{ from, to, state?, label?, id? }` | One cubic curve each. `id` defaults to `from->to`. |
 | node `{ id, kind?, label, lines?, meta?, state?, icon?, href?, action?, tip?, group? }` | `kind` picks the template (default `app`); `lines` are muted lines (up to 3); `meta` is right-aligned mono text; `href` makes the node a link; `action` makes it a button that emits `onAction`; `tip` is a tooltip. |
 | `state` | `ok`, `run`, `off`, `fail`, or any string (becomes the class `bm-node--<state>` / `bm-edge--<state>`). |
 
-Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 lines, text wraps), **`app`** (40px row, tile, label, mono meta), **`ghost`** (dashed outline, centred icon + label, a button). Any other kind uses the cluster-style card. State `off` on any node: dashed border, no fill, muted label. Built-in icons: `cluster`, `app`, `plus`, `db`, `globe`, `user`, `box`; any other `icon` shows its first letter.
+Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 lines, text wraps), **`app`** (40px row, tile, label, mono meta; with `lines` it grows and stacks them under the label), **`ghost`** (dashed outline, centred icon + label, a button). Any other kind uses the cluster-style card. State `off` on any node: dashed border, no fill, muted label. Built-in icons: `cluster`, `app`, `plus`, `db`, `globe`, `user`, `box`; any other `icon` shows its first letter.
 
 ### Layout
 
 - **Columns**: the container's width is split with a 64px gap; the first column is 1.35× each of the others. Every column is centred vertically against the tallest. A `ResizeObserver` re-lays out on width changes. Nodes keep the given order; `order: 'crossings'` reorders columns after the first to reduce crossings.
 - **General**: `layout: 'layered'` (the default when the data has `nodes` instead of `columns`) uses bromaid's ELK layout, loaded on demand so column-only pages never download it. Any DSL diagram can be mounted with `graphFromProgram(parse(source))`.
 - **Edges**: a cubic from the right-middle of the source flush to the left-middle of the target, control points at the horizontal midpoint, a port dot at each end. `ok` = solid 1.5px muted `--ok`; `run` = dashed 5/5 in `--run` with a moving dash (it holds still under `prefers-reduced-motion`); `off` = dashed 3/4 grey; `fail` = solid 1.5px in `--fail` (red), full `--fail` when highlighted.
+- **Nodes** keep at least 8px between their text and their border on every side and grow with their lines. In the general layout `mount()` measures each node's HTML (rounded up, again when web fonts arrive), so text never runs out of its box.
 - **Edge labels** sit at the source end, 8px in, on the side the curve leaves clear (above a curve that goes down, below one that goes up). Labels on edges from the same node stack outward and never overlap.
 
 ### Options
@@ -258,9 +259,16 @@ Built-in templates: **`cluster`** (state-coloured icon tile, label, up to 3 line
 | `padding`, `gap`, `rowGap`, `weights`, `order` | `0`, `64`, `10`, `[1.35, 1…]`, `given` | Column layout spacing and order. |
 | `animate` | `150` | Position animation on update, ms (off under reduced motion). |
 | `css` | `true` | Inject the stylesheet; set `false` and include `graphCss` yourself (e.g. for a strict CSP). |
+| `align` | `start` | General layout: how nodes stacked in a group line up when the group sets no `align`. |
+| `panZoom` | `false` | A pan-and-zoom canvas, for a full-screen view (leave it off where the page should scroll). The graph fills `el` (give it a height). See below. |
+| `fit` | `both` | With `panZoom`: on open and on `fit()` show the whole graph centred both ways, never past 100% (`none`: 100%, centred). `padding` is the space kept around it (default 24). |
+| `controls` | `true` | With `panZoom`: zoom out / zoom in / fit buttons, bottom right. |
+| `onViewport(viewport)` | | With `panZoom`: `{ x, y, k }` after every pan or zoom. |
 | `onNodeClick(node, event)`, `onAction(action, node, event)`, `onEdgeClick(edge, event)`, `onLayout(layout)` | | `onNodeClick` runs before an `href` is followed; `event.preventDefault()` stops it (e.g. to use a client router). |
 
 Interaction: hovering or focusing a node highlights it (edges go to full colour at 2px, the rest fades), hovering an edge highlights its ends, every node is focusable (Tab), Enter clicks, `tip` shows on hover and focus.
+
+**Pan and zoom** (`mount(el, data, { panZoom: true, fit: 'both' })`), the usual canvas convention (Figma, Miro): a plain wheel or two-finger scroll pans (shift + wheel sideways); pinch, or ctrl/⌘ + wheel, zooms at the pointer (touch pinch too); dragging the empty canvas pans, and so does dragging anywhere while Space is held (grab cursor) or with the middle button; `+` / `-` zoom in and out, `0` fits; a double-click on the canvas zooms in at the pointer (shift: out). Nodes stay focusable and clickable; a node that takes keyboard focus off screen is panned into view. The handle has `zoomIn()`, `zoomOut()`, `fit()` and `viewport()`; `<Bromaid graphRef={ref} />` hands it to React. The maths are pure and exported from `@bromaid/layout/graph` (`fitViewport`, `zoomAt`, `wheelAction`, `keyAction`, `pinchStep`, `revealBox`).
 
 ### Theming
 

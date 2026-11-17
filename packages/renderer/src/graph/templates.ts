@@ -39,10 +39,16 @@ export function cardTemplate(node: GraphNode): string {
   return `<span class="bm-tile">${nodeIconHTML(node)}</span><span class="bm-text"><span class="bm-label">${escapeXml(node.label)}</span>${lines}</span>`;
 }
 
-/** app: compact 40px row, tile + label + right-aligned mono meta. */
+/**
+ * app: compact 40px row, tile + label + right-aligned mono meta. With `lines`
+ * the row grows: the label and its muted lines stack beside the tile.
+ */
 export function appTemplate(node: GraphNode): string {
   const meta = node.meta !== undefined && node.meta !== '' ? `<span class="bm-meta">${escapeXml(node.meta)}</span>` : '';
-  return `<span class="bm-tile">${nodeIconHTML(node)}</span><span class="bm-label">${escapeXml(node.label)}</span>${meta}`;
+  const lines = (node.lines ?? []).slice(0, 3).map((l) => `<span class="bm-line">${escapeXml(l)}</span>`).join('');
+  const label = `<span class="bm-label">${escapeXml(node.label)}</span>`;
+  const text = lines === '' ? label : `<span class="bm-text">${label}${lines}</span>`;
+  return `<span class="bm-tile">${nodeIconHTML(node)}</span>${text}${meta}`;
 }
 
 /** ghost: centred icon + label (dashed outline comes from the class). */
